@@ -1,4 +1,4 @@
-package com.finartzIntern.HotelRezervationSys.domain.entities;
+package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

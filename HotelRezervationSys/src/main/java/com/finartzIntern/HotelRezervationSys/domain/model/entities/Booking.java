@@ -1,7 +1,7 @@
-package com.finartzIntern.HotelRezervationSys.domain.entities;
+package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 
-import com.finartzIntern.HotelRezervationSys.domain.enums.BookingStatus;
-import com.finartzIntern.HotelRezervationSys.domain.enums.PaymentStatus;
+import com.finartzIntern.HotelRezervationSys.domain.model.enums.BookingStatus;
+import com.finartzIntern.HotelRezervationSys.domain.model.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

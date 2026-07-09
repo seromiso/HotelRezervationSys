@@ -1,4 +1,4 @@
-package com.finartzIntern.HotelRezervationSys.domain.entities;
+package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,25 +8,31 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "room_type_images")
+@Table(name = "reservation_guests")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RoomTypeImage {
+public class ReservationGuest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_type_id", nullable = false)
-    private RoomType roomType;
+    @JoinColumn(name = "reservation_id", nullable = false)
+    private Reservation reservation;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @Column(nullable = false, length = 100)
+    private String name;
 
-    @Column(name = "display_order")
-    private Integer displayOrder;
+    @Column(nullable = false, length = 100)
+    private String surname;
+
+    @Column(name = "guest_type", nullable = false)
+    private String guestType;
+
+    @Column(name = "is_primary_guest", nullable = false)
+    private Boolean primaryGuest;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -43,5 +49,13 @@ public class RoomTypeImage {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void makePrimaryGuest() {
+        this.primaryGuest = true;
+    }
+
+    public void removePrimaryGuest() {
+        this.primaryGuest = false;
     }
 }
