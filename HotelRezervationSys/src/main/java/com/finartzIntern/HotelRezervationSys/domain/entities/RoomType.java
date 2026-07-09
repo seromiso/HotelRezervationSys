@@ -1,14 +1,17 @@
 package com.finartzIntern.HotelRezervationSys.domain.entities;
+
 import com.finartzIntern.HotelRezervationSys.domain.enums.RoomTypeStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.List;
-import java.util.Set;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 @Entity
 @Table(name = "room_types")
 @Data
@@ -20,8 +23,8 @@ public class RoomType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="hotel_id",nullable=false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hotel_id", nullable = false)
     private Hotel hotel;
 
     @Column(nullable = false, length = 100)
@@ -80,26 +83,59 @@ public class RoomType {
         this.updatedAt = LocalDateTime.now();
     }
 
+
     public void addFeature(Feature feature) {
+        if (this.features == null) {
+            this.features = new HashSet<>();
+        }
         this.features.add(feature);
     }
 
     public void removeFeature(Feature feature) {
-        this.features.remove(feature);
+        if (this.features != null) {
+            this.features.remove(feature);
+        }
     }
 
-    public void deactivateRoomType() {
-        this.status = RoomTypeStatus.INACTIVE;
+
+    public void addImage(RoomTypeImage image) {
+        this.images.add(image);
+        image.setRoomType(this);
     }
+
+    public void removeImage(RoomTypeImage image) {
+        this.images.remove(image);
+        image.setRoomType(null);
+    }
+
+
+    public void addPrice(RoomPrice price) {
+        this.prices.add(price);
+        price.setRoomType(this);
+    }
+
+    public void removePrice(RoomPrice price) {
+        this.prices.remove(price);
+        price.setRoomType(null);
+    }
+
+
+    public void addReservation(Reservation reservation) {
+        this.reservations.add(reservation);
+        reservation.setRoomType(this);
+    }
+
+    public void removeReservation(Reservation reservation) {
+        this.reservations.remove(reservation);
+        reservation.setRoomType(null);
+    }
+
 
     public void activateRoomType() {
         this.status = RoomTypeStatus.ACTIVE;
     }
 
-
-
-
-
-
-
+    public void deactivateRoomType() {
+        this.status = RoomTypeStatus.INACTIVE;
+    }
 }
