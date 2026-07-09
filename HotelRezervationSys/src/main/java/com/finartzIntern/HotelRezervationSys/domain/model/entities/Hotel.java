@@ -1,5 +1,5 @@
-package com.finartzIntern.HotelRezervationSys.domain.entities;
-import com.finartzIntern.HotelRezervationSys.domain.enums.HotelStatus;
+package com.finartzIntern.HotelRezervationSys.domain.model.entities;
+import com.finartzIntern.HotelRezervationSys.domain.model.enums.HotelStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,17 +46,15 @@ public class Hotel {
     @Column(name = "commission_rate",nullable = false ,precision = 4,scale = 2)
     private BigDecimal commissionRate;
 
-    @Column(name = "hotel_iban_no", nullable = false,length = 34)
+    @Column(name = "iban_no", nullable = false,length = 34)
     private String ibanNo;
 
-    @Column(name = "check_in_time", nullable = false, length = 5)
+    @Column(name = "check_in_time",length = 5)
     private String checkInTime;
 
-    @Column(name = "check_out_time", nullable = false, length = 5)
+    @Column(name = "check_out_time",length = 5)
     private String checkOutTime;
 
-    @Column(name = "cancellation_policy", columnDefinition = "TEXT")
-    private String cancellationPolicy;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -77,7 +75,7 @@ public class Hotel {
             joinColumns = @JoinColumn(name = "hotel_id"),
             inverseJoinColumns = @JoinColumn(name = "feature_id")
     )
-    private Set<Feature> features;
+    private Set<Features> features;
 
 
     @Column(name = "created_at", updatable = false)
@@ -106,22 +104,18 @@ public class Hotel {
         this.status = HotelStatus.ACTIVE;
     }
 
-    public void addFeature(Feature feature){
+    public void addFeature(Features feature){
         if(this.features == null){
             features = new java.util.HashSet<>();
         }
         this.features.add(feature);
     }
 
-    public void deleteFeature(Feature feature){
+    public void deleteFeature(Features feature){
         if(this.features != null){
             features.remove(feature);
         }
     }
-
-
-
-
 
 }
 
