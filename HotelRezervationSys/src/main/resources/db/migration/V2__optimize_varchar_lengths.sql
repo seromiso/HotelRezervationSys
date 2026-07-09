@@ -41,3 +41,7 @@ ALTER TABLE payments
     ALTER COLUMN status TYPE varchar(20),
     ALTER COLUMN currency TYPE varchar(10),
     ALTER COLUMN transaction_id TYPE varchar(100);
+
+
+-- V2 dosyasının en altına ekleyebilirsin:
+ALTER TABLE hotel_reviews ADD CONSTRAINT chk_review_rating CHECK (rating >= 1 AND rating <= 5);

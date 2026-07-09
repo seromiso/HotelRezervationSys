@@ -47,7 +47,6 @@ public class ReservationGuest {
 
     @PreUpdate
 
-
     public void makePrimaryGuest() {
         this.primaryGuest = true;
     }
