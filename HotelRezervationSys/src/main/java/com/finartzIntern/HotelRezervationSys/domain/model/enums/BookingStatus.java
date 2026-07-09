@@ -1,4 +1,4 @@
-package com.finartzIntern.HotelRezervationSys.domain.enums;
+package com.finartzIntern.HotelRezervationSys.domain.model.enums;
 
 public enum BookingStatus {
     PENDING,

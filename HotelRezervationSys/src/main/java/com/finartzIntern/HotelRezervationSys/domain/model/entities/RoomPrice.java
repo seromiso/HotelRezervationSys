@@ -1,38 +1,37 @@
 package com.finartzIntern.HotelRezervationSys.domain.model.entities;
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "reservation_guests")
+@Table(name = "room_prices")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReservationGuest {
+public class RoomPrice {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reservation_id", nullable = false)
-    private Reservation reservation;
+    @JoinColumn(name = "room_type_id", nullable = false)
+    private RoomType roomType;
 
-    @Column(nullable = false, length = 100)
-    private String name;
+    @Column(nullable = false, length = 20)
+    private String currency;
 
-    @Column(nullable = false, length = 100)
-    private String surname;
+    @Column(name = "start_date", nullable = false)
+    private LocalDate startDate;
 
-    @Column(name = "guest_type", nullable = false)
-    private String guestType;
+    @Column(name = "end_date", nullable = false)
+    private LocalDate endDate;
 
-    @Column(name = "is_primary_guest", nullable = false)
-    private Boolean primaryGuest;
+    @Column(name = "price_per_night", nullable = false, precision = 10, scale = 2)
+    private BigDecimal pricePerNight;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -50,12 +49,8 @@ public class ReservationGuest {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
-    public void makePrimaryGuest() {
-        this.primaryGuest = true;
-    }
-
-    public void removePrimaryGuest() {
-        this.primaryGuest = false;
-    }
 }
+
+
+
+
