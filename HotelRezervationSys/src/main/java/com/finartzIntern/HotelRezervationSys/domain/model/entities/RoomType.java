@@ -64,7 +64,7 @@ public class RoomType {
             joinColumns = @JoinColumn(name = "room_type_id"),
             inverseJoinColumns = @JoinColumn(name = "feature_id")
     )
-    private Set<Feature> features = new HashSet<>();
+    private Set<Features> features = new HashSet<>();
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -84,14 +84,14 @@ public class RoomType {
     }
 
 
-    public void addFeature(Feature feature) {
+    public void addFeature(Features feature) {
         if (this.features == null) {
             this.features = new HashSet<>();
         }
         this.features.add(feature);
     }
 
-    public void removeFeature(Feature feature) {
+    public void removeFeature(Features feature) {
         if (this.features != null) {
             this.features.remove(feature);
         }

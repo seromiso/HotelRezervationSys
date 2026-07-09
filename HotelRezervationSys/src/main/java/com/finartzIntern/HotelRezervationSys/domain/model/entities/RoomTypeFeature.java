@@ -24,7 +24,7 @@ public class RoomTypeFeature {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "feature_id", nullable = false)
-    private Feature feature;
+    private Features feature;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
