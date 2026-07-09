@@ -1,30 +1,31 @@
-package com.finartzIntern.HotelRezervationSys.domain.entities;
+package com.finartzIntern.HotelRezervationSys.domain.model.entities;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "room_type_features")
+@Table(name = "favorites")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
-public class RoomTypeFeature {
+public class Favorites {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Favoriyi ekleyen kullanıcı
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_type_id", nullable = false)
-    private RoomType roomType;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
+    // Favoriye eklenen otel
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "feature_id", nullable = false)
-    private Feature feature;
+    @JoinColumn(name = "hotel_id", nullable = false)
+    private Hotel hotel;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -33,10 +34,4 @@ public class RoomTypeFeature {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
-
-
-
-
-
-
 }
