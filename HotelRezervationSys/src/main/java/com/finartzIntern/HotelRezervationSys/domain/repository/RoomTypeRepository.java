@@ -1,4 +1,4 @@
-package com.finartzIntern.HotelRezervationSys.domain.repo;
+package com.finartzIntern.HotelRezervationSys.domain.repository;
 
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.RoomType;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.RoomTypeStatus;

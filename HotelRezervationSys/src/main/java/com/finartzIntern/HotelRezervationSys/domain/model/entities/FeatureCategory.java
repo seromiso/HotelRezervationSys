@@ -2,12 +2,12 @@ package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "feature_categories")
-@Data
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class FeatureCategory {

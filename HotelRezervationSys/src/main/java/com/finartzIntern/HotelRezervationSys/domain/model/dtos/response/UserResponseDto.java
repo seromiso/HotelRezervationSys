@@ -1,5 +1,8 @@
 package com.finartzIntern.HotelRezervationSys.domain.model.dtos.response;
+import com.finartzIntern.HotelRezervationSys.domain.model.enums.UserStatus;
 import lombok.Data;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.UserRole;
 
@@ -10,9 +13,10 @@ public class UserResponseDto {
     private String name;
     private String surname;
     private UserRole role;
-    private LocalDateTime birthDate;
+    private LocalDate birthDate;
     private String phoneNumber;
     private boolean email_verified;
-    private String status;
+    private UserStatus status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
