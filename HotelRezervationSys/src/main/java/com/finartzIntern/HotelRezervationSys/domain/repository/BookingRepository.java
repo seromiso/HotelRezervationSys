@@ -1,4 +1,4 @@
-package com.finartzIntern.HotelRezervationSys.domain.repo;
+package com.finartzIntern.HotelRezervationSys.domain.repository;
 
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;

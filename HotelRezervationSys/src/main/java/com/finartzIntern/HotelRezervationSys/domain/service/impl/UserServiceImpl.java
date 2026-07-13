@@ -4,21 +4,16 @@ import com.finartzIntern.HotelRezervationSys.domain.mappers.UserMapper;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.UserCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.UserResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.User;
-import com.finartzIntern.HotelRezervationSys.domain.model.enums.UserRole;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.UserStatus;
 import com.finartzIntern.HotelRezervationSys.domain.repository.UserRepository;
 import com.finartzIntern.HotelRezervationSys.domain.service.UserService;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import java.time.LocalDate;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-
-
-
-import static java.time.temporal.ChronoUnit.YEARS;
 
 @Service
 @RequiredArgsConstructor
