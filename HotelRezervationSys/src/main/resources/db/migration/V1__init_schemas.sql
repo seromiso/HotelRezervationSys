@@ -2,17 +2,17 @@
 
 CREATE TABLE users (
                        id BIGSERIAL PRIMARY KEY,
-                       email varchar(255) UNIQUE NOT NULL,
-                       password_hash varchar(255) NOT NULL,
-                       name varchar(255) NOT NULL,
-                       surname varchar(255) NOT NULL,
-                       role varchar(255) NOT NULL,
-                       datebirth timestamp NOT NULL,
-                       phonenumber varchar(255),
+                       email varchar(50) UNIQUE NOT NULL,
+                       password_hash varchar(50) NOT NULL,
+                       name varchar(50) NOT NULL,
+                       surname varchar(25) NOT NULL,
+                       role varchar(20) NOT NULL,
+                       datebirth DATE NOT NULL,
+                       phonenumber varchar(50),
                        email_verified boolean NOT NULL,
-                       status varchar(255) NOT NULL,
-                       created_at timestamp,
-                       updated_at timestamp
+                       status varchar(20) NOT NULL,
+                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE hotels (
