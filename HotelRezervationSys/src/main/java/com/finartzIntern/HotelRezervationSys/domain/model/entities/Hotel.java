@@ -1,9 +1,8 @@
 package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.HotelStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.util.List;
 import java.util.Set;
 
@@ -13,7 +12,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "hotels")
-@Data
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Hotel {

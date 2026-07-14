@@ -1,16 +1,18 @@
 package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.UserRole;
+import com.finartzIntern.HotelRezervationSys.domain.model.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -36,7 +38,7 @@ public class User {
     private UserRole role;
 
     @Column(name = "datebirth", nullable = false)
-    private LocalDateTime dateBirth; // Şemadaki datetime karşılığı
+    private LocalDate dateBirth; // Şemadaki datetime karşılığı
 
     @Column(name = "phonenumber", length = 20) //
     private String phoneNumber;
@@ -44,8 +46,9 @@ public class User {
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;
 
-    @Column(nullable = false, length = 20)
-    private String status; // ACTIVE, INACTIVE
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false,length = 20)
+    private UserStatus status; // ACTIVE, INACTIVE
 
 
 

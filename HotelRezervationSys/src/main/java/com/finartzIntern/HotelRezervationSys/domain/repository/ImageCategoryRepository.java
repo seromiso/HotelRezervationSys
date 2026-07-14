@@ -1,4 +1,4 @@
-package com.finartzIntern.HotelRezervationSys.domain.repo;
+package com.finartzIntern.HotelRezervationSys.domain.repository;
 
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.ImageCategory;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -2,13 +2,13 @@ package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "hotel_images")
-@Data
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class HotelImage {
