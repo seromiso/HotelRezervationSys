@@ -3,9 +3,11 @@ package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.HotelReviewResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.repository.HotelReviewRepository;
 import com.finartzIntern.HotelRezervationSys.domain.service.HotelReviewService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class HotelReviewServiceImpl implements HotelReviewService {
 
     private final HotelReviewRepository hotelReviewRepository;
