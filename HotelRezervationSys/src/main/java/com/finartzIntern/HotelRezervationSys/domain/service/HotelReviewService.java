@@ -1,9 +1,14 @@
 package com.finartzIntern.HotelRezervationSys.domain.service;
 
-import org.springframework.stereotype.Service;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.HotelReviewResponseDto;
 
-@Service
-public class HotelReviewService {
+import java.util.List;
 
-    private final
+public interface HotelReviewService {
+
+    List<HotelReviewResponseDto> getReviewsByHotelId(Long hotelId);
+
+    HotelReviewResponseDto getReviewByReservationId(Long reservationId);
+
+    boolean hasReviewForReservation(Long reservationId);
 }
