@@ -5,7 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface FeatureCategoryRepository extends JpaRepository<FeatureCategory,Integer> {
-
-    List<FeatureCategory> findAllFeatureCategories(Long id);
+public interface FeatureCategoryRepository extends JpaRepository<FeatureCategory,Long> {
 }
