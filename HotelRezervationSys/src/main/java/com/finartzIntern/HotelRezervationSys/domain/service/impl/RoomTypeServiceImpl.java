@@ -1,6 +1,6 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
-import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.CreateRoomTypeRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.RoomTypeCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Hotel;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.RoomType;
@@ -23,7 +23,7 @@ public class RoomTypeServiceImpl implements RoomTypeService {
 
     @Override // Sözleşmedeki metodu ezdiğimizi/uyguladığımızı belirtir
     @Transactional
-    public RoomTypeResponseDto createRoomType(Long hotelId, CreateRoomTypeRequestDto requestDto) {
+    public RoomTypeResponseDto createRoomType(Long hotelId, RoomTypeCreateRequestDto requestDto) {
 
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(() -> new RuntimeException("Otel bulunamadı!"));
@@ -74,5 +74,33 @@ public class RoomTypeServiceImpl implements RoomTypeService {
                 roomType.getStatus(),
                 roomType.getCreatedAt()
         )).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RoomTypeResponseDto getRoomTypeById(Long id) {
+        RoomType roomType = roomTypeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Oda tipi bulunamadı!"));
+
+        return new RoomTypeResponseDto(
+                roomType.getId(),
+                roomType.getTitle(),
+                roomType.getMaxAdults(),
+                roomType.getMaxChildren(),
+                roomType.getBaseCapacity(),
+                roomType.getBedConfiguration(),
+                roomType.getTotalInventory(),
+                roomType.getStatus(),
+                roomType.getCreatedAt()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void deleteRoomType(Long id) {
+        RoomType roomType = roomTypeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Oda tipi bulunamadı!"));
+
+        roomTypeRepository.delete(roomType);
     }
 }
