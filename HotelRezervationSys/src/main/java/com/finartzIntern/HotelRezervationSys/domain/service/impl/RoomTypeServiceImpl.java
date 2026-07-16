@@ -21,7 +21,7 @@ public class RoomTypeServiceImpl implements RoomTypeService {
     private final HotelRepository hotelRepository;
 
 
-    @Override // Sözleşmedeki metodu ezdiğimizi/uyguladığımızı belirtir
+    @Override
     @Transactional
     public RoomTypeResponseDto createRoomType(Long hotelId, RoomTypeCreateRequestDto requestDto) {
 
