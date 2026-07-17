@@ -4,6 +4,7 @@ import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingR
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Booking;
 import com.finartzIntern.HotelRezervationSys.domain.service.BookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,5 +22,14 @@ public class BookingController {
     @GetMapping("/user/{userId}")
     public List<BookingResponse> getBookingsByUserId(@PathVariable Long userId) {
         return bookingService.getBookingsByUserId(userId);
+    }
+
+    @GetMapping("/{bookingNumber}")
+    public ResponseEntity<BookingResponse> getBookingByBookingNumber(
+            @PathVariable String bookingNumber
+    ) {
+        return ResponseEntity.ok(
+                bookingService.getBookingByBookingNumber(bookingNumber)
+        );
     }
 }

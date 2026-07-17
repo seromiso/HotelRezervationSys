@@ -1,5 +1,6 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingResponse;
 
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Booking;
@@ -25,6 +26,21 @@ public class BookingServiceImpl implements BookingService {
                 .map(this::toBookingResponse)
                 .toList();
 
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BookingResponse getBookingByBookingNumber(String bookingNumber) {
+
+        Booking booking = bookingRepository
+                .findByBookingNumber(bookingNumber)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Booking not found!"
+                        )
+                );
+
+        return toBookingResponse(booking);
     }
 
     private BookingResponse toBookingResponse(Booking booking){
