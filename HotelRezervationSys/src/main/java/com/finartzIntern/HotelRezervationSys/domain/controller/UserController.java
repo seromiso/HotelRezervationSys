@@ -29,7 +29,7 @@ public class UserController {
     }
     @PostMapping
     public ResponseEntity<UserResponseDto> createUser(@RequestBody UserCreateRequestDto userRequestDto) {
-        // Kullanıcı başarıyla oluşturulduğunda REST standartlarına göre 201 (CREATED) dönmek en iyisidir.
+
         UserResponseDto response = userService.createUser(userRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
