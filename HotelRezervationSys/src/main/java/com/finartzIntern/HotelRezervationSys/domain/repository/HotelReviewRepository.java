@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface HotelReviewRepository extends JpaRepository<HotelReviews,Long> {
     List<HotelReviews> findByHotelId(Long hotelId);
     Optional<HotelReviews> findByReservationId(Long reservationId);
+    Boolean existsByReservationId(Long reservationId);
 }
