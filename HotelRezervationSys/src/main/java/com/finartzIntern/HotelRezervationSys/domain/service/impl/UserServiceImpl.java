@@ -1,36 +1,54 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
-
-import com.finartzIntern.HotelRezervationSys.domain.mappers.UserMapper;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.UserCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.UserResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.User;
+import com.finartzIntern.HotelRezervationSys.domain.model.enums.UserRole;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.UserStatus;
 import com.finartzIntern.HotelRezervationSys.domain.repository.UserRepository;
 import com.finartzIntern.HotelRezervationSys.domain.service.UserService;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+
+
+
+
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
 
 
+    private UserResponseDto mapToDto(User user){
+        UserResponseDto dto = new UserResponseDto();
+
+        dto.setId(user.getId());
+        dto.setName(user.getName());
+        dto.setSurname(user.getSurname());
+        dto.setEmail(user.getEmail());
+        dto.setRole(user.getRole());
+        dto.setBirthDate(user.getDateBirth());
+        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setStatus(user.getStatus());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+
+        return dto;
+    }
 
     @Override
-    @Transactional(readOnly = true) // Sadece okuma yapacağı için performansı artırır
+    @Transactional(readOnly = true)
     public UserResponseDto getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı! ID: " + id));
 
-        return userMapper.toResponseDto(user);
+    return mapToDto(user);
     }
 
     @Override
@@ -39,7 +57,9 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Bu e-posta adresine ait kullanıcı bulunamadı: " + email));
 
-        return userMapper.toResponseDto(user);
+        return mapToDto(user);
+
+
     }
     @Override
     public UserResponseDto createUser(UserCreateRequestDto userRequestDto) {
@@ -52,7 +72,7 @@ public class UserServiceImpl implements UserService {
         user.setRole(userRequestDto.getRole());
         user.setPhoneNumber(userRequestDto.getPhoneNumber());
         user.setDateBirth(userRequestDto.getDateBirth());
-        user.setStatus(UserStatus.ACTIVE); // <-- Status enum ismine göre düzelt!
+        user.setStatus(UserStatus.PASSIVE);
 
         User savedUser = userRepository.save(user);
 
@@ -64,6 +84,7 @@ public class UserServiceImpl implements UserService {
         response.setCreatedAt(savedUser.getCreatedAt());
         response.setStatus(savedUser.getStatus());
         response.setUpdatedAt(savedUser.getUpdatedAt());
+        response.setEmail_verified(false);
 
 
         return response;
