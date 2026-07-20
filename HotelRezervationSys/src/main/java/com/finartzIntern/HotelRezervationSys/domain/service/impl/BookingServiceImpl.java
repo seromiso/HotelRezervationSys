@@ -1,7 +1,7 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
-import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingResponse;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingResponseDto;
 
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Booking;
 import com.finartzIntern.HotelRezervationSys.domain.repository.BookingRepository;
@@ -20,7 +20,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingResponse> getBookingsByUserId(Long userId) {
+    public List<BookingResponseDto> getBookingsByUserId(Long userId) {
         return bookingRepository.findAllByUser_Id(userId)
                 .stream()
                 .map(this::toBookingResponse)
@@ -30,7 +30,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public BookingResponse getBookingByBookingNumber(String bookingNumber) {
+    public BookingResponseDto getBookingByBookingNumber(String bookingNumber) {
 
         Booking booking = bookingRepository
                 .findByBookingNumber(bookingNumber)
@@ -43,8 +43,8 @@ public class BookingServiceImpl implements BookingService {
         return toBookingResponse(booking);
     }
 
-    private BookingResponse toBookingResponse(Booking booking){
-        return new BookingResponse(
+    private BookingResponseDto toBookingResponse(Booking booking){
+        return new BookingResponseDto(
                 booking.getId(),
                 booking.getUser().getId(),
                 booking.getBookingNumber(),
