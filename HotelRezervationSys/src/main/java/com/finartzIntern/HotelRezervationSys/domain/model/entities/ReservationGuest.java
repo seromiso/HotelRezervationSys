@@ -37,14 +37,11 @@ public class ReservationGuest {
     private LocalDateTime createdAt;
 
 
-
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
 
     }
-
-    @PreUpdate
 
     public void makePrimaryGuest() {
         this.primaryGuest = true;
