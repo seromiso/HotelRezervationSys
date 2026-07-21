@@ -1,5 +1,7 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ConflictException;
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Favorites;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.FavoriteRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.FavoriteResponseDto;
@@ -25,12 +27,21 @@ public class FavoritesServiceImpl implements FavoritesService {
 
     @Override
     public FavoriteResponseDto addFavorite(FavoriteRequestDto requestDto) {
-        if (favoritesRepository.existsByUserIdAndHotelId(requestDto.getUserId(), requestDto.getHotelId()))
-            throw new RuntimeException("Bu otel zaten favorilerinizde!");
+
+        // Zaten favorilerde varsa 409 Conflict fırlatıyoruz
+        if (favoritesRepository.existsByUserIdAndHotelId(requestDto.getUserId(), requestDto.getHotelId())) {
+            throw new ConflictException("Bu otel zaten favorilerinizde!");
+        }
 
         Favorites favorite = new Favorites();
-        favorite.setUser(userRepository.findById(requestDto.getUserId()).orElseThrow());
-        favorite.setHotel(hotelRepository.findById(requestDto.getHotelId()).orElseThrow());
+
+        // Kullanıcı yoksa 404 Not Found fırlatıyoruz
+        favorite.setUser(userRepository.findById(requestDto.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı! ID: " + requestDto.getUserId())));
+
+        // Otel yoksa 404 Not Found fırlatıyoruz
+        favorite.setHotel(hotelRepository.findById(requestDto.getHotelId())
+                .orElseThrow(() -> new ResourceNotFoundException("Otel bulunamadı! ID: " + requestDto.getHotelId())));
 
         Favorites savedFavorite = favoritesRepository.save(favorite);
         return convertToResponseDto(savedFavorite);
@@ -38,6 +49,10 @@ public class FavoritesServiceImpl implements FavoritesService {
 
     @Override
     public void removeFavorite(FavoriteRequestDto requestDto) {
+        boolean exists = favoritesRepository.existsByUserIdAndHotelId(requestDto.getUserId(), requestDto.getHotelId());
+        if (!exists) {
+            throw new ResourceNotFoundException("Silinecek favori kaydı bulunamadı!");
+        }
         favoritesRepository.deleteByUserIdAndHotelId(requestDto.getUserId(), requestDto.getHotelId());
     }
 
