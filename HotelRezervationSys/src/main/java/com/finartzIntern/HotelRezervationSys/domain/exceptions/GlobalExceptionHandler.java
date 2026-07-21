@@ -2,16 +2,21 @@ package com.finartzIntern.HotelRezervationSys.domain.exceptions;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @Autowired
+    private MessageSource messageSource;
 
     /**
      * Handles ResourceNotFoundException and returns HTTP 404 response.
@@ -22,6 +27,8 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
             )
     {
+        Locale locale = request.getLocale();
+        String localizedMessage = messageSource.getMessage("error.resource.not.found", null, locale);
 
         HttpStatus status = HttpStatus.NOT_FOUND;
 
@@ -29,7 +36,7 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now(),
                 status.value(),
                 status.getReasonPhrase(),
-                ex.getMessage(),
+                localizedMessage,
                 request.getRequestURI()
         );
 
