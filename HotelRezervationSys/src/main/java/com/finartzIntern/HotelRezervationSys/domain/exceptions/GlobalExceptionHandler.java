@@ -45,18 +45,11 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
 
     }
-
-    //Sayı eklenen yere harf/metin girildiğinde (HTTP 400 bad request) döner
-
+    // Sayı beklenen yere harf/metin girildiğinde (HTTP 400 Bad Request) döner
     @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatchException(
             org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex,
-            HttpServletRequest request
-    )
-    {
-
-        Locale locale = request.getLocale();
-        String localizedMessage = messageSource.getMessage("error.type.mismatch", null, locale);
+            HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
 
@@ -64,27 +57,18 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now(),
                 status.value(),
                 status.getReasonPhrase(),
-                localizedMessage,
+                "Hatalı veri tipi! Lütfen URL'ye geçerli bir sayı giriniz.",
                 request.getRequestURI()
         );
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(errorResponse);
-
+        return ResponseEntity.status(status).body(errorResponse);
     }
 
-    //Yukarıdakilerin hiçbiri yakalayamazsa, sistemin çökmemesi için SON ÇÖPÇÜ (HTTP 500)
-
+    // Yukarıdakilerin hiçbiri yakalayamazsa, sistemin çökmemesi için SON ÇÖPÇÜ (HTTP 500)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex,
-            HttpServletRequest request
-    )
-    {
-
-        Locale locale = request.getLocale();
-        String localizedMessage = messageSource.getMessage("error.internal.server", null, locale);
+            HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -92,13 +76,10 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now(),
                 status.value(),
                 status.getReasonPhrase(),
-                localizedMessage,
+                "Sunucuda beklenmeyen bir hata oluştu: " + ex.getMessage(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(errorResponse);
-
+        return ResponseEntity.status(status).body(errorResponse);
     }
 }
