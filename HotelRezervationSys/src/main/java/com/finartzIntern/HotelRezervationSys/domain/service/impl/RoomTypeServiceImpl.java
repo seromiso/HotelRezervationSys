@@ -1,5 +1,6 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.RoomTypeCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Hotel;
@@ -20,13 +21,13 @@ public class RoomTypeServiceImpl implements RoomTypeService {
     private final RoomTypeRepository roomTypeRepository;
     private final HotelRepository hotelRepository;
 
-
     @Override
     @Transactional
     public RoomTypeResponseDto createRoomType(Long hotelId, RoomTypeCreateRequestDto requestDto) {
 
+        // Kaynak Bulunamadı (HTTP 404)
         Hotel hotel = hotelRepository.findById(hotelId)
-                .orElseThrow(() -> new RuntimeException("Otel bulunamadı!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Otel bulunamadı!"));
 
         RoomType roomType = new RoomType();
         roomType.setHotel(hotel);
@@ -53,12 +54,14 @@ public class RoomTypeServiceImpl implements RoomTypeService {
                 savedRoomType.getCreatedAt()
         );
     }
+
     @Override
     @Transactional(readOnly = true)
     public List<RoomTypeResponseDto> getRoomTypesByHotelId(Long hotelId) {
 
+        // Kaynak Bulunamadı (HTTP 404)
         if (!hotelRepository.existsById(hotelId)) {
-            throw new RuntimeException("Otel bulunamadı!");
+            throw new ResourceNotFoundException("Otel bulunamadı!");
         }
 
         List<RoomType> roomTypes = roomTypeRepository.findByHotelId(hotelId);
@@ -79,8 +82,10 @@ public class RoomTypeServiceImpl implements RoomTypeService {
     @Override
     @Transactional(readOnly = true)
     public RoomTypeResponseDto getRoomTypeById(Long id) {
+
+        // Kaynak Bulunamadı (HTTP 404)
         RoomType roomType = roomTypeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Oda tipi bulunamadı!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Oda tipi bulunamadı!"));
 
         return new RoomTypeResponseDto(
                 roomType.getId(),
@@ -98,8 +103,10 @@ public class RoomTypeServiceImpl implements RoomTypeService {
     @Override
     @Transactional
     public void deleteRoomType(Long id) {
+
+        // Kaynak Bulunamadı (HTTP 404)
         RoomType roomType = roomTypeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Oda tipi bulunamadı!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Oda tipi bulunamadı!"));
 
         roomTypeRepository.delete(roomType);
     }
