@@ -51,7 +51,7 @@ public class BookingServiceImpl implements BookingService {
                 .findByBookingNumber(bookingNumber)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Booking not found!"
+                                "error.booking.not.found"
                         )
                 );
 
