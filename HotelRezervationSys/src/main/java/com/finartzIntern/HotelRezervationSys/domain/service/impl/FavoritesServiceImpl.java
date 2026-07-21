@@ -30,18 +30,18 @@ public class FavoritesServiceImpl implements FavoritesService {
 
         // Zaten favorilerde varsa 409 Conflict fırlatıyoruz
         if (favoritesRepository.existsByUserIdAndHotelId(requestDto.getUserId(), requestDto.getHotelId())) {
-            throw new ConflictException("Bu otel zaten favorilerinizde!");
+            throw new ConflictException("error.favorites.allready");
         }
 
         Favorites favorite = new Favorites();
 
         // Kullanıcı yoksa 404 Not Found fırlatıyoruz
         favorite.setUser(userRepository.findById(requestDto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı! ID: " + requestDto.getUserId())));
+                .orElseThrow(() -> new ResourceNotFoundException("error.user.not.found" + requestDto.getUserId())));
 
         // Otel yoksa 404 Not Found fırlatıyoruz
         favorite.setHotel(hotelRepository.findById(requestDto.getHotelId())
-                .orElseThrow(() -> new ResourceNotFoundException("Otel bulunamadı! ID: " + requestDto.getHotelId())));
+                .orElseThrow(() -> new ResourceNotFoundException("error.hotel.not.found ID: " + requestDto.getHotelId())));
 
         Favorites savedFavorite = favoritesRepository.save(favorite);
         return convertToResponseDto(savedFavorite);
@@ -51,7 +51,7 @@ public class FavoritesServiceImpl implements FavoritesService {
     public void removeFavorite(FavoriteRequestDto requestDto) {
         boolean exists = favoritesRepository.existsByUserIdAndHotelId(requestDto.getUserId(), requestDto.getHotelId());
         if (!exists) {
-            throw new ResourceNotFoundException("Silinecek favori kaydı bulunamadı!");
+            throw new ResourceNotFoundException("error.favorites.no.favorites.found");
         }
         favoritesRepository.deleteByUserIdAndHotelId(requestDto.getUserId(), requestDto.getHotelId());
     }
