@@ -8,10 +8,10 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
+@Data
 @Entity
 @Table(name = "payments")
-@Data
+
 @NoArgsConstructor
 @AllArgsConstructor
 public class Payment {

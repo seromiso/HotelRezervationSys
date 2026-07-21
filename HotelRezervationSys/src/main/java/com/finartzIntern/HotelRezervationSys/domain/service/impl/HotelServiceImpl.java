@@ -1,0 +1,104 @@
+package com.finartzIntern.HotelRezervationSys.domain.service.impl;
+
+import com.finartzIntern.HotelRezervationSys.domain.mappers.HotelMapper;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.HotelCreateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.HotelUpdateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.HotelResponseDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.entities.Hotel;
+import com.finartzIntern.HotelRezervationSys.domain.model.enums.HotelStatus;
+import com.finartzIntern.HotelRezervationSys.domain.repository.HotelRepository;
+import com.finartzIntern.HotelRezervationSys.domain.service.HotelService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class HotelServiceImpl implements HotelService {
+
+
+    private final HotelRepository hotelRepository;
+    private final HotelMapper hotelMapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public HotelResponseDto getHotelById(Long id) {
+
+        Hotel hotel = hotelRepository.findById(id).orElseThrow(
+                () -> new RuntimeException("Otel Bulunamadı! Id: " + id));
+
+        HotelResponseDto response = new HotelResponseDto();
+        response = hotelMapper.toResponseDto(hotel);
+        return response;
+
+    }
+    @Transactional(readOnly = true)
+    @Override
+    public List<HotelResponseDto> listActiveHotels() {
+        List<Hotel> activeHotels = hotelRepository.findByStatus(HotelStatus.ACTIVE);
+
+        return activeHotels.stream()
+                .map(hotelMapper::toResponseDto)
+                .collect(Collectors.toList());
+    }
+    @Transactional(readOnly = true)
+    @Override
+    public List<HotelResponseDto> getHotelsByCityAndStatus(String city, HotelStatus status) {
+        List<Hotel> activeHotelsInCities = hotelRepository.findByCityAndStatus(city,status);
+        return activeHotelsInCities.stream()
+                .map(hotelMapper::toResponseDto).collect(Collectors.toList());
+
+
+    }
+    @Transactional(readOnly = true)
+    @Override
+    public List<HotelResponseDto> getHotelsByManagerId(Long id) {
+        List<Hotel> HotelsByManager = hotelRepository.findByManagerId(id);
+        return HotelsByManager.stream().map(hotelMapper::toResponseDto).collect(Collectors.toList());
+
+    }
+    @Transactional(readOnly = true)
+    @Override
+    public List<HotelResponseDto> ListAllHotels(){
+    List<Hotel> hotels = hotelRepository.findAll();
+        return hotels.stream()
+                .map(hotelMapper::toResponseDto)
+                .collect(Collectors.toList());
+    }
+    @Override
+    public HotelResponseDto createHotel(HotelCreateRequestDto createRequestDto){
+
+        Hotel hotel = hotelMapper.toEntityDto(createRequestDto);
+        Hotel savedHotel = hotelRepository.save(hotel);
+
+        return hotelMapper.toResponseDto(savedHotel);
+
+
+}
+
+  @Override
+  public HotelResponseDto updateHotelInfo(Long id, HotelUpdateRequestDto updateDto){
+
+    Hotel existingHotel = hotelRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Otel bulunamadı! ID: " + id));
+    hotelMapper.UpdateHotelFromDto(updateDto,existingHotel);
+    Hotel updatedHotel = hotelRepository.save(existingHotel);
+    return hotelMapper.toResponseDto(updatedHotel);
+
+
+ }
+    @Override
+    public HotelResponseDto updateHotelStatus(Long id, HotelStatus status) {
+        Hotel hotel = hotelRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Otel bulunamadı! ID: " + id));
+
+        hotel.setStatus(status);
+        Hotel updatedHotel = hotelRepository.save(hotel);
+        return hotelMapper.toResponseDto(updatedHotel);
+    }
+
+
+
+}
