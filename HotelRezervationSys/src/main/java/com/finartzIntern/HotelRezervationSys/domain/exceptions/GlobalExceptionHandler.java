@@ -1,78 +1,80 @@
 package com.finartzIntern.HotelRezervationSys.domain.exceptions;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 
+/**
+ * Central handler that catches exceptions across the app and converts them
+ * into a consistent ErrorResponse. Applied automatically to every controller.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-
     /**
-     * Handles ResourceNotFoundException and returns HTTP 404 response.
+     * Requested resource (user, hotel, reservation, etc.) was not found -> 404.
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
             ResourceNotFoundException ex,
             HttpServletRequest request
-            )
-    {
-
-        HttpStatus status = HttpStatus.NOT_FOUND;
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(errorResponse);
-
+    ) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
-    // Sayı beklenen yere harf/metin girildiğinde (HTTP 400 Bad Request) döner
-    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+
+    /**
+     * Wrong type in a path/request parameter (e.g. text instead of a number) -> 400.
+     * Thrown by Spring itself, not a custom exception.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatchException(
-            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex,
-            HttpServletRequest request) {
-
-        HttpStatus status = HttpStatus.BAD_REQUEST;
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                "Hatalı veri tipi! Lütfen URL'ye geçerli bir sayı giriniz.",
-                request.getRequestURI()
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Invalid data type! Please provide a valid value.",
+                request
         );
-
-        return ResponseEntity.status(status).body(errorResponse);
     }
 
-    // Yukarıdakilerin hiçbiri yakalayamazsa, sistemin çökmemesi için SON ÇÖPÇÜ (HTTP 500)
+    /**
+     * Catch-all for anything not handled above -> 500.
+     * Keeps the app from crashing with a raw stack trace. Must stay last.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex,
-            HttpServletRequest request) {
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred: " + ex.getMessage(),
+                request
+        );
+    }
 
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-
+    /**
+     * Shared helper that builds the ErrorResponse and wraps it in a ResponseEntity.
+     * New handlers just need to call this with a status and a message.
+     */
+    private ResponseEntity<ErrorResponse> buildResponse(
+            HttpStatus status,
+            String message,
+            HttpServletRequest request
+    ) {
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(),
                 status.value(),
                 status.getReasonPhrase(),
-                "Sunucuda beklenmeyen bir hata oluştu: " + ex.getMessage(),
+                message,
                 request.getRequestURI()
         );
-
         return ResponseEntity.status(status).body(errorResponse);
     }
 }
