@@ -1,5 +1,6 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.InvalidRequestException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.BookingCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingResponseDto;
@@ -193,8 +194,8 @@ public class BookingServiceImpl implements BookingService {
             Hotel hotel
     ) {
         if (!roomType.getHotel().getId().equals(hotel.getId())) {
-            throw new IllegalArgumentException(
-                    "Selected room type does not belong to the selected hotel."
+            throw new InvalidRequestException(
+                    "error.booking.invalid.selection"
             );
         }
     }
