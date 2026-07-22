@@ -1,6 +1,7 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ConflictException;
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.InvalidRequestException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.AddRoomTypeFeatureRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeFeatureResponseDto;
@@ -45,8 +46,7 @@ public class RoomTypeFeatureServiceImpl implements RoomTypeFeatureService {
         RoomTypeFeature roomTypeFeature = roomTypeFeatureRepository
                 .findByRoomType_IdAndFeature_Id(roomTypeId, featureId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Feature not found for room type id: " + roomTypeId
-                                + ", feature id: " + featureId
+                        "error.room.type.feature.not.found"
                 ));
 
         return RoomTypeFeatureResponseDto.from(roomTypeFeature);
@@ -65,20 +65,22 @@ public class RoomTypeFeatureServiceImpl implements RoomTypeFeatureService {
             AddRoomTypeFeatureRequestDto request
     ) {
         if (roomTypeFeatureRepository.existsByRoomType_IdAndFeature_Id(roomTypeId, request.featureId())) {
-            throw new ConflictException(
-                    "This feature already exists for room type id: " + roomTypeId
-            );
+            throw new ConflictException("error.room.type.feature.already.exists");
         }
 
         RoomType roomType = roomTypeRepository.findById(roomTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Room type not found with id: " + roomTypeId
+                        "error.room.type.not.found" + roomTypeId
                 ));
 
         Features feature = featuresRepository.findById(request.featureId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Feature not found with id: " + request.featureId()
+                        "error.feature.not.found" + request.featureId()
                 ));
+
+        if (!"ROOM".equalsIgnoreCase(feature.getType())) {
+            throw new InvalidRequestException("error.room.type.feature.only.room.allowed");
+        }
 
         RoomTypeFeature roomTypeFeature = new RoomTypeFeature();
         roomTypeFeature.setRoomType(roomType);
@@ -93,10 +95,7 @@ public class RoomTypeFeatureServiceImpl implements RoomTypeFeatureService {
     @Transactional
     public void removeFeatureFromRoomType(Long roomTypeId, Long featureId) {
         if (!roomTypeFeatureRepository.existsByRoomType_IdAndFeature_Id(roomTypeId, featureId)) {
-            throw new ResourceNotFoundException(
-                    "Feature not found for room type id: " + roomTypeId
-                            + ", feature id: " + featureId
-            );
+            throw new ResourceNotFoundException("error.room.type.feature.not.found");
         }
 
         roomTypeFeatureRepository.deleteByRoomType_IdAndFeature_Id(roomTypeId, featureId);

@@ -39,14 +39,13 @@ public class HotelReviewServiceImpl implements HotelReviewService {
     public HotelReviewResponseDto getReviewById(Long reviewId) {
         HotelReviews review = hotelReviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Review not found with id: " + reviewId
-                ));
+                        "error.hotel.review.not.found"));
         return HotelReviewResponseDto.from(review) ;
     }
 
     @Override
     public HotelReviewResponseDto getReviewByReservationId(Long reservationId) {
-        return hotelReviewRepository.findByReservationId(reservationId).map(HotelReviewResponseDto::from).orElseThrow(() -> new ResourceNotFoundException("Review not found for reservation id: " + reservationId));
+        return hotelReviewRepository.findByReservationId(reservationId).map(HotelReviewResponseDto::from).orElseThrow(() -> new ResourceNotFoundException("error.hotel.review.not.found"));
     }
 
     @Override
@@ -65,13 +64,13 @@ public class HotelReviewServiceImpl implements HotelReviewService {
     public HotelReviewResponseDto createReview(Long hotelId, Long userId, Long reservationId, CreateHotelReviewRequestDto request) {
         if(hotelReviewRepository.existsByReservationId(reservationId)){
 
-            throw new ConflictException("This reservation already has a review. ");
+            throw new ConflictException("error.hotel.review.already.exists");
         }
         Hotel hotel = hotelRepository.findById(hotelId)
-                .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + hotelId));
+                .orElseThrow(() -> new ResourceNotFoundException("error.hotel.not.found"+ hotelId));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "User not found with id: " + userId
+                        "error.user.not.found" + userId
                 ));
         HotelReviews review = new HotelReviews();
         review.setHotel(hotel);
@@ -90,7 +89,7 @@ public class HotelReviewServiceImpl implements HotelReviewService {
     public HotelReviewResponseDto updateReview(Long reviewId, UpdateHotelReviewRequestDto request) {
         HotelReviews review = hotelReviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Review not found with id: " + reviewId
+                        "error.hotel.review.not.found" + reviewId
                 ));
 
         review.setRating(request.rating());
@@ -106,7 +105,7 @@ public class HotelReviewServiceImpl implements HotelReviewService {
     public void deleteReview(Long reviewId) {
         HotelReviews review = hotelReviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Review not found with id: " + reviewId
+                        "error.hotel.review.not.found" + reviewId
                 ));
 
         hotelReviewRepository.delete(review);
