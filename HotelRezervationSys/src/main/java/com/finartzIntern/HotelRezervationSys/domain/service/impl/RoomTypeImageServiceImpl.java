@@ -1,5 +1,6 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.RoomTypeImageCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeImageResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.RoomType;
@@ -24,19 +25,16 @@ public class RoomTypeImageServiceImpl implements RoomTypeImageService {
     @Transactional
     public RoomTypeImageResponseDto addImageToRoomType(Long roomTypeId, RoomTypeImageCreateRequestDto requestDto) {
 
-
+        // Kaynak Bulunamadı (HTTP 404)
         RoomType roomType = roomTypeRepository.findById(roomTypeId)
-                .orElseThrow(() -> new RuntimeException("Resim eklenecek oda tipi bulunamadı!"));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Resim eklenecek oda tipi bulunamadı!"));
 
         RoomTypeImage image = new RoomTypeImage();
         image.setRoomType(roomType);
         image.setImageUrl(requestDto.imageUrl());
         image.setDisplayOrder(requestDto.displayOrder());
 
-
         RoomTypeImage savedImage = roomTypeImageRepository.save(image);
-
 
         return new RoomTypeImageResponseDto(
                 savedImage.getId(),
@@ -51,10 +49,10 @@ public class RoomTypeImageServiceImpl implements RoomTypeImageService {
     @Transactional(readOnly = true)
     public List<RoomTypeImageResponseDto> getImagesByRoomTypeId(Long roomTypeId) {
 
+        // Kaynak Bulunamadı (HTTP 404)
         if (!roomTypeRepository.existsById(roomTypeId)) {
-            throw new RuntimeException("Oda tipi bulunamadı!");
+            throw new ResourceNotFoundException("Oda tipi bulunamadı!");
         }
-
 
         List<RoomTypeImage> images = roomTypeImageRepository.findByRoomTypeIdOrderByDisplayOrderAsc(roomTypeId);
 
@@ -70,8 +68,10 @@ public class RoomTypeImageServiceImpl implements RoomTypeImageService {
     @Override
     @Transactional
     public void deleteImage(Long imageId) {
+
+        // Kaynak Bulunamadı (HTTP 404)
         RoomTypeImage image = roomTypeImageRepository.findById(imageId)
-                .orElseThrow(() -> new RuntimeException("Silinecek resim bulunamadı!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Silinecek resim bulunamadı!"));
 
         roomTypeImageRepository.delete(image);
     }
