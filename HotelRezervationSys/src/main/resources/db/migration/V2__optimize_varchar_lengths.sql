@@ -45,3 +45,4 @@ ALTER TABLE payments
 
 -- V2 dosyasının en altına ekleyebilirsin:
 ALTER TABLE hotel_reviews ADD CONSTRAINT chk_review_rating CHECK (rating >= 1 AND rating <= 5);
+ALTER TABLE room_types ADD COLUMN description TEXT;
