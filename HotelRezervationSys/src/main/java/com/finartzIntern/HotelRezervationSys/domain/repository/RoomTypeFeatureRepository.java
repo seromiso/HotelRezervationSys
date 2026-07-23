@@ -8,6 +8,8 @@ import java.util.Optional;
 
 public interface RoomTypeFeatureRepository extends JpaRepository<RoomTypeFeature,Long> {
 
+    List<RoomTypeFeature> findByRoomTypeId(Long roomTypeId);
+
     List<RoomTypeFeature> findByRoomType_Id(Long roomTypeId);
     Optional<RoomTypeFeature> findByRoomType_IdAndFeature_Id(Long roomTypeId, Long featureId);
     boolean existsByRoomType_IdAndFeature_Id(Long roomTypeId, Long featureId);
