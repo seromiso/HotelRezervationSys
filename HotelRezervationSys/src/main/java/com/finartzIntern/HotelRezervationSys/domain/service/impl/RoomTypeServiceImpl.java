@@ -2,10 +2,15 @@ package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.RoomTypeCreateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeDetailResponseDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeFeatureResponseDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeImageResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Hotel;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.RoomType;
 import com.finartzIntern.HotelRezervationSys.domain.repository.HotelRepository;
+import com.finartzIntern.HotelRezervationSys.domain.repository.RoomTypeFeatureRepository;
+import com.finartzIntern.HotelRezervationSys.domain.repository.RoomTypeImageRepository;
 import com.finartzIntern.HotelRezervationSys.domain.repository.RoomTypeRepository;
 import com.finartzIntern.HotelRezervationSys.domain.service.RoomTypeService;
 import org.springframework.stereotype.Service;
@@ -20,6 +25,9 @@ public class RoomTypeServiceImpl implements RoomTypeService {
 
     private final RoomTypeRepository roomTypeRepository;
     private final HotelRepository hotelRepository;
+
+    private final RoomTypeImageRepository roomTypeImageRepository;
+    private final RoomTypeFeatureRepository roomTypeFeatureRepository;
 
     @Override
     @Transactional
@@ -59,7 +67,6 @@ public class RoomTypeServiceImpl implements RoomTypeService {
     @Transactional(readOnly = true)
     public List<RoomTypeResponseDto> getRoomTypesByHotelId(Long hotelId) {
 
-        // Kaynak Bulunamadı (HTTP 404)
         if (!hotelRepository.existsById(hotelId)) {
             throw new ResourceNotFoundException("Otel bulunamadı!");
         }
@@ -81,22 +88,42 @@ public class RoomTypeServiceImpl implements RoomTypeService {
 
     @Override
     @Transactional(readOnly = true)
-    public RoomTypeResponseDto getRoomTypeById(Long id) {
+    public RoomTypeDetailResponseDto getRoomTypeById(Long id) {
 
-        // Kaynak Bulunamadı (HTTP 404)
+        // 1. Temel Oda Bilgisini Getir
         RoomType roomType = roomTypeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Oda tipi bulunamadı!"));
 
-        return new RoomTypeResponseDto(
+        // 2. Odaya Ait Resimleri (Galeriyi) Çek
+        List<RoomTypeImageResponseDto> gallery = roomTypeImageRepository
+                .findByRoomTypeIdOrderByDisplayOrderAsc(id)
+                .stream()
+                .map(img -> new RoomTypeImageResponseDto(
+                        img.getId(), img.getRoomType().getId(), img.getImageUrl(),
+                        img.getDisplayOrder(), img.getCreatedAt()
+                )).toList();
+
+        // 3. Odaya Ait Özellikleri Çek (Kendi yazdığın muazzam from() metodunu kullandık)
+        List<RoomTypeFeatureResponseDto> features = roomTypeFeatureRepository
+                .findByRoomTypeId(id)
+                .stream()
+                .map(RoomTypeFeatureResponseDto::from)
+                .toList();
+
+        // 4. Her Şeyi Tek Bir Pakette (Detail DTO) Birleştirip Dön
+        return new RoomTypeDetailResponseDto(
                 roomType.getId(),
                 roomType.getTitle(),
+                roomType.getDescription(), // Entity'e eklediğimiz alan
                 roomType.getMaxAdults(),
                 roomType.getMaxChildren(),
                 roomType.getBaseCapacity(),
                 roomType.getBedConfiguration(),
                 roomType.getTotalInventory(),
                 roomType.getStatus(),
-                roomType.getCreatedAt()
+                roomType.getCreatedAt(),
+                gallery,
+                features
         );
     }
 
@@ -104,7 +131,6 @@ public class RoomTypeServiceImpl implements RoomTypeService {
     @Transactional
     public void deleteRoomType(Long id) {
 
-        // Kaynak Bulunamadı (HTTP 404)
         RoomType roomType = roomTypeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Oda tipi bulunamadı!"));
 
