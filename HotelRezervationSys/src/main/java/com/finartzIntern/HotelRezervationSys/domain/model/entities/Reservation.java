@@ -2,7 +2,10 @@ package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.ReservationStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -41,55 +44,51 @@ public class Reservation {
     @Column(name = "adult_count", nullable = false)
     private Integer adultCount;
 
-    @Column(name = "child_count")
-    private Integer childCount;
+    @Column(name = "child_count", nullable = false)
+    private Integer childCount = 0;
 
-    @Column(name = "price_per_night", nullable = false, precision = 10, scale = 2)
+    @Column(
+            name = "price_per_night",
+            nullable = false,
+            precision = 10,
+            scale = 2
+    )
     private BigDecimal pricePerNight;
 
-    @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
+    @Column(
+            name = "total_price",
+            nullable = false,
+            precision = 10,
+            scale = 2
+    )
     private BigDecimal totalPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReservationStatus status;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(
+            name = "created_at",
+            nullable = false,
+            updatable = false
+    )
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(
+            name = "updated_at",
+            nullable = false
+    )
     private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
-
-    public void confirmReservation() {
-        this.status = ReservationStatus.CONFIRMED;
-    }
-
-    public void cancelReservation() {
-        this.status = ReservationStatus.CANCELLED;
-    }
-
-    public void completeReservation() {
-        this.status = ReservationStatus.COMPLETED;
-    }
-
-    public void setPending() {
-        this.status = ReservationStatus.PENDING;
-    }
-
-    public boolean isValidDateRange() {
-        return checkOutDate.isAfter(checkInDate);
-    }
 }
-

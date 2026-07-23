@@ -1,6 +1,7 @@
 package com.finartzIntern.HotelRezervationSys.domain.exceptions;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.http.HttpStatus;
@@ -12,15 +13,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.time.LocalDateTime;
 import java.util.Locale;
 
+@RequiredArgsConstructor
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private final MessageSource messageSource;
-
-    public GlobalExceptionHandler(MessageSource messageSource) {
-        this.messageSource = messageSource;
-    }
-
+    
     /**
      * Resource not found (user, hotel, reservation, etc.) -> 404.
      * ex.getMessage() is expected to be a message key (e.g. "user.not.found").

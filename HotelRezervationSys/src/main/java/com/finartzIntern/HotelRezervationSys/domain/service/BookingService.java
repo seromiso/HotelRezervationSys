@@ -1,11 +1,13 @@
 package com.finartzIntern.HotelRezervationSys.domain.service;
 
-import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingResponse;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.BookingCreateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingResponseDto;
 
 
 import java.util.List;
 
 public interface BookingService {
-    List<BookingResponse> getBookingsByUserId(Long userId);
-    BookingResponse getBookingByBookingNumber(String bookingNumber);
+    List<BookingResponseDto> getBookingsByUserId(Long userId);
+    BookingResponseDto getBookingByBookingNumber(String bookingNumber);
+    BookingResponseDto createBooking(BookingCreateRequestDto bookingCreateRequestDto);
 }
