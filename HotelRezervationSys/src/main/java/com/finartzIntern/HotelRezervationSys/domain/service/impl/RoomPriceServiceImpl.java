@@ -1,5 +1,7 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.InvalidRequestException;
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.RoomPriceCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomPriceResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.RoomPrice;
@@ -26,13 +28,14 @@ public class RoomPriceServiceImpl implements RoomPriceService {
     @Transactional
     public RoomPriceResponseDto addRoomPrice(Long roomTypeId, RoomPriceCreateRequestDto requestDto) {
 
-        // 1. Tarih Mantık Kontrolü
+        // 1. Tarih Mantık Kontrolü - İş Kuralı İhlali (HTTP 400)
         if (requestDto.endDate().isBefore(requestDto.startDate())) {
-            throw new RuntimeException("Bitiş tarihi, başlangıç tarihinden önce olamaz!");
+            throw new InvalidRequestException("Bitiş tarihi, başlangıç tarihinden önce olamaz!");
         }
 
+        // Kaynak Bulunamadı (HTTP 404)
         RoomType roomType = roomTypeRepository.findById(roomTypeId)
-                .orElseThrow(() -> new RuntimeException("Oda tipi bulunamadı!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Oda tipi bulunamadı!"));
 
         LocalDate newStart = requestDto.startDate();
         LocalDate newEnd = requestDto.endDate();
@@ -106,6 +109,7 @@ public class RoomPriceServiceImpl implements RoomPriceService {
                 savedPrice.getCreatedAt()
         );
     }
+
     @Override
     @Transactional(readOnly = true)
     public List<RoomPriceResponseDto> getRoomPricesByRoomTypeId(Long roomTypeId) {
@@ -122,11 +126,12 @@ public class RoomPriceServiceImpl implements RoomPriceService {
                 price.getCreatedAt()
         )).toList();
     }
+
     @Override
     @Transactional
     public void deleteRoomPrice(Long id) {
         RoomPrice roomPrice = roomPriceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Silinecek fiyat bulunamadı!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Silinecek fiyat bulunamadı!"));
         roomPriceRepository.delete(roomPrice);
     }
 }

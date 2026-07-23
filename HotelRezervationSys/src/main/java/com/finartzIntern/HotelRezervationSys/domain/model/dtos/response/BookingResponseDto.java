@@ -6,7 +6,7 @@ import com.finartzIntern.HotelRezervationSys.domain.model.enums.PaymentStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public record BookingResponse(
+public record BookingResponseDto(
         Long id,
         Long userId,
         String bookingNumber,

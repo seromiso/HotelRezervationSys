@@ -1,6 +1,5 @@
 package com.finartzIntern.HotelRezervationSys.domain.repository;
 
-import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingResponse;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

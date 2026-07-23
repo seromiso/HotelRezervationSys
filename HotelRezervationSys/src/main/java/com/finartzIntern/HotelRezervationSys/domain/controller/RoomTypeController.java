@@ -1,6 +1,7 @@
     package com.finartzIntern.HotelRezervationSys.domain.controller;
 
     import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.RoomTypeCreateRequestDto;
+    import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeDetailResponseDto;
     import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeResponseDto;
     import com.finartzIntern.HotelRezervationSys.domain.service.RoomTypeService;
     import lombok.RequiredArgsConstructor;
@@ -13,15 +14,16 @@
     @RestController
     @RequestMapping("/api/v1/room-types")
     @RequiredArgsConstructor
-
     public class RoomTypeController {
+
         private final RoomTypeService roomTypeService;
 
-            @GetMapping("/hotel/{hotelId}")
+        @GetMapping("/hotel/{hotelId}")
         public ResponseEntity<List<RoomTypeResponseDto>> getRoomTypesByHotelId(@PathVariable Long hotelId) {
             List<RoomTypeResponseDto> responseList = roomTypeService.getRoomTypesByHotelId(hotelId);
             return ResponseEntity.ok(responseList);
         }
+
         @PostMapping("/hotel/{hotelId}")
         public ResponseEntity<RoomTypeResponseDto> createRoomType(
                 @PathVariable Long hotelId,
@@ -31,8 +33,9 @@
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }
 
+        // DİKKAT: Artık detaylı DTO dönüyor (Belgedeki 2. Görev)
         @GetMapping("/{id}")
-        public ResponseEntity<RoomTypeResponseDto> getRoomTypeById(@PathVariable Long id) {
+        public ResponseEntity<RoomTypeDetailResponseDto> getRoomTypeById(@PathVariable Long id) {
             return ResponseEntity.ok(roomTypeService.getRoomTypeById(id));
         }
 
