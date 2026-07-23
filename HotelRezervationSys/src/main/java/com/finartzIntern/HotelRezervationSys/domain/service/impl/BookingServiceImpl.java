@@ -1,5 +1,6 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ConflictException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.InvalidRequestException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.BookingCreateRequestDto;
@@ -166,7 +167,7 @@ public class BookingServiceImpl implements BookingService {
         return userRepository.findById(userId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "User not found with id: " + userId
+                                "error.user.not.found"
                         )
                 );
     }
@@ -175,7 +176,7 @@ public class BookingServiceImpl implements BookingService {
         return hotelRepository.findById(hotelId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Hotel not found with id: " + hotelId
+                                "error.hotel.not.found"
                         )
                 );
     }
@@ -184,7 +185,7 @@ public class BookingServiceImpl implements BookingService {
         return roomTypeRepository.findById(roomTypeId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Room type not found with id: " + roomTypeId
+                                "error.room.type.not.found"
                         )
                 );
     }
@@ -210,20 +211,21 @@ public class BookingServiceImpl implements BookingService {
                 request.reservation().checkOutDate();
 
         if (checkInDate == null || checkOutDate == null) {
-            throw new IllegalArgumentException(
-                    "Check-in and check-out dates are required."
+            throw new InvalidRequestException(
+                    "error.booking.dates.required"
+
             );
         }
 
         if (checkInDate.isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException(
-                    "Check-in date cannot be in the past."
+            throw new InvalidRequestException(
+                    "error.booking.checkin.past"
             );
         }
 
         if (!checkOutDate.isAfter(checkInDate)) {
-            throw new IllegalArgumentException(
-                    "Check-out date must be after check-in date."
+            throw new InvalidRequestException(
+                    "error.booking.invalid.date.range"
             );
         }
     }
@@ -236,8 +238,8 @@ public class BookingServiceImpl implements BookingService {
         Integer childCount = request.reservation().childCount();
 
         if (adultCount == null || adultCount <= 0) {
-            throw new IllegalArgumentException(
-                    "At least one adult guest is required."
+            throw new InvalidRequestException(
+                    "error.booking.adult.required"
             );
         }
 
@@ -245,29 +247,20 @@ public class BookingServiceImpl implements BookingService {
                 childCount == null ? 0 : childCount;
 
         if (normalizedChildCount < 0) {
-            throw new IllegalArgumentException(
-                    "Child count cannot be negative."
+            throw new InvalidRequestException(
+                    "error.booking.child.count.negative"
             );
         }
 
-        if (adultCount > roomType.getMaxAdults()) {
-            throw new IllegalArgumentException(
-                    "Adult count exceeds room type capacity."
-            );
-        }
+        boolean capacityExceeded =
+                adultCount > roomType.getMaxAdults()
+                        || normalizedChildCount > roomType.getMaxChildren()
+                        || adultCount + normalizedChildCount
+                        > roomType.getBaseCapacity();
 
-        if (normalizedChildCount > roomType.getMaxChildren()) {
-            throw new IllegalArgumentException(
-                    "Child count exceeds room type capacity."
-            );
-        }
-
-        int totalGuestCount =
-                adultCount + normalizedChildCount;
-
-        if (totalGuestCount > roomType.getBaseCapacity()) {
-            throw new IllegalArgumentException(
-                    "Total guest count exceeds room type capacity."
+        if (capacityExceeded) {
+            throw new InvalidRequestException(
+                    "error.booking.capacity.exceeded"
             );
         }
     }
@@ -277,8 +270,8 @@ public class BookingServiceImpl implements BookingService {
     ) {
         if (request.guests() == null
                 || request.guests().isEmpty()) {
-            throw new IllegalArgumentException(
-                    "At least one guest must be provided."
+            throw new InvalidRequestException(
+                    "error.booking.guest.required"
             );
         }
 
@@ -294,8 +287,8 @@ public class BookingServiceImpl implements BookingService {
                 adultCount + childCount;
 
         if (request.guests().size() != expectedGuestCount) {
-            throw new IllegalArgumentException(
-                    "Guest list size does not match adult and child counts."
+            throw new InvalidRequestException(
+                    "error.booking.guest.count.mismatch"
             );
         }
 
@@ -309,8 +302,8 @@ public class BookingServiceImpl implements BookingService {
                 .count();
 
         if (primaryGuestCount != 1) {
-            throw new IllegalArgumentException(
-                    "Exactly one primary guest must be selected."
+            throw new InvalidRequestException(
+                    "error.booking.primary.guest.invalid"
             );
         }
     }
@@ -318,7 +311,7 @@ public class BookingServiceImpl implements BookingService {
     private void validateRoomTypeStatus(RoomType roomType) {
         if (roomType.getStatus() != RoomTypeStatus.ACTIVE) {
             throw new IllegalArgumentException(
-                    "Selected room type is not active."
+                    "error.booking.room.unavailable"
             );
         }
     }
@@ -336,8 +329,9 @@ public class BookingServiceImpl implements BookingService {
                 );
 
         if (reservedRoomCount >= roomType.getTotalInventory()) {
-            throw new IllegalArgumentException(
-                    "No available room for the selected dates."
+
+            throw new ConflictException(
+                    "error.booking.no.availability"
             );
         }
     }
