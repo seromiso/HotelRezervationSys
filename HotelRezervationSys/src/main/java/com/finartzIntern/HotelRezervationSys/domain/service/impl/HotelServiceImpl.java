@@ -6,11 +6,22 @@ import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.HotelUpda
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.HotelResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Hotel;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.HotelStatus;
+import com.finartzIntern.HotelRezervationSys.domain.model.enums.RoomTypeStatus;
 import com.finartzIntern.HotelRezervationSys.domain.repository.HotelRepository;
+import com.finartzIntern.HotelRezervationSys.domain.service.AvailabilityService;
 import com.finartzIntern.HotelRezervationSys.domain.service.HotelService;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeFeatureResponseDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeSearchResponseDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.entities.RoomPrice;
+import com.finartzIntern.HotelRezervationSys.domain.model.entities.RoomType;
+import com.finartzIntern.HotelRezervationSys.domain.repository.RoomPriceRepository;
+import com.finartzIntern.HotelRezervationSys.domain.repository.RoomTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +32,10 @@ public class HotelServiceImpl implements HotelService {
 
     private final HotelRepository hotelRepository;
     private final HotelMapper hotelMapper;
+
+    private final RoomTypeRepository roomTypeRepository;
+    private final RoomPriceRepository roomPriceRepository;
+    private final AvailabilityService availabilityService;
 
     @Override
     @Transactional(readOnly = true)
@@ -99,6 +114,48 @@ public class HotelServiceImpl implements HotelService {
         return hotelMapper.toResponseDto(updatedHotel);
     }
 
+    @Override
+    public List<RoomTypeSearchResponseDto> searchAvailableRooms(
+            Long hotelId, LocalDate checkIn, LocalDate checkOut, Integer adults, Integer children) {
 
+        long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
+        if (nights <= 0) {
+            throw new IllegalArgumentException("Çıkış tarihi, giriş tarihinden önce veya aynı gün olamaz.");
+        }
+
+        List<RoomType> activeRooms = roomTypeRepository.findByHotelIdAndStatus(hotelId, RoomTypeStatus.ACTIVE);
+
+        return activeRooms.stream()
+                .filter(rt -> rt.getMaxAdults() >= adults && rt.getMaxChildren() >= children)
+                .map(rt -> {
+                    BigDecimal pricePerNight = roomPriceRepository
+                            .findFirstByRoomTypeIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                                    rt.getId(), checkIn, checkOut)
+                            .map(RoomPrice::getPricePerNight)
+                            .orElse(BigDecimal.ZERO);
+
+                    BigDecimal totalPrice = pricePerNight.multiply(BigDecimal.valueOf(nights));
+
+                    boolean isAvailable = availabilityService.checkAvailability(
+                            rt.getId(), rt.getTotalInventory(), checkIn, checkOut);
+
+                    String coverImage = rt.getImages().isEmpty() ? null : rt.getImages().get(0).getImageUrl();
+                    List<RoomTypeFeatureResponseDto> features = rt.getFeatures().stream()
+                            .map(RoomTypeFeatureResponseDto::from)
+                            .toList();
+
+                    return new RoomTypeSearchResponseDto(
+                            rt.getId(),
+                            rt.getTitle(),
+                            rt.getMaxAdults(),
+                            rt.getMaxChildren(),
+                            features,
+                            coverImage,
+                            totalPrice,
+                            isAvailable
+                    );
+                })
+                .toList();
+    }
 
 }

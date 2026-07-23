@@ -3,8 +3,10 @@ package com.finartzIntern.HotelRezervationSys.domain.service;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.HotelCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.HotelUpdateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.HotelResponseDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeSearchResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.HotelStatus;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface HotelService  {
@@ -16,4 +18,5 @@ public interface HotelService  {
     HotelResponseDto createHotel(HotelCreateRequestDto requestDto);
     HotelResponseDto updateHotelInfo(Long id, HotelUpdateRequestDto updateRequestDto);
     HotelResponseDto updateHotelStatus(Long id, HotelStatus status); //adminin onaylama işlemi
+    List<RoomTypeSearchResponseDto> searchAvailableRooms(Long hotelId, LocalDate checkIn, LocalDate checkOut, Integer adults, Integer children);
 }
