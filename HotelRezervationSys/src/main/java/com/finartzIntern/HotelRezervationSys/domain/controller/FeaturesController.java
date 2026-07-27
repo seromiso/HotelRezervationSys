@@ -25,8 +25,9 @@ public class    FeaturesController {
     }
 
     @GetMapping("")
-    public ResponseEntity<List<FeaturesResponseDto>> getAllFeatures() {
-        List<FeaturesResponseDto> response = featuresService.getAllFeatures();
+    public ResponseEntity<List<FeaturesResponseDto>> getFeatures(
+            @RequestParam(required = false) String type) {
+        List<FeaturesResponseDto> response = featuresService.getFeaturesByType(type);
         return ResponseEntity.ok(response);
     }
 

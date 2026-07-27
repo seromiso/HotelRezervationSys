@@ -105,7 +105,7 @@ public class RoomTypeServiceImpl implements RoomTypeService {
 
         // 3. Odaya Ait Özellikleri Çek (Kendi yazdığın muazzam from() metodunu kullandık)
         List<RoomTypeFeatureResponseDto> features = roomTypeFeatureRepository
-                .findByRoomTypeId(id)
+                .findByRoomType_Id(id)
                 .stream()
                 .map(RoomTypeFeatureResponseDto::from)
                 .toList();

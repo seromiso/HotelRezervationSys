@@ -39,14 +39,14 @@ public class FeaturesServiceImpl implements FeaturesService {
 
         Features savedFeature = featuresRepository.save(feature);
 
-        return new FeaturesResponseDto(savedFeature.getId(), savedFeature.getName());
+        return new FeaturesResponseDto(savedFeature.getId(), savedFeature.getName(),savedFeature.getCategory().getId());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<FeaturesResponseDto> getAllFeatures() {
         return featuresRepository.findAll().stream()
-                .map(f -> new FeaturesResponseDto(f.getId(), f.getName()))
+                .map(f -> new FeaturesResponseDto(f.getId(), f.getName(),f.getCategory().getId()))
                 .collect(Collectors.toList());
     }
 
@@ -58,6 +58,21 @@ public class FeaturesServiceImpl implements FeaturesService {
         Features features=featuresRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Özellik bulunamadı, ID: " + id));
 
-        return new FeaturesResponseDto(features.getId(), features.getName());
+        return new FeaturesResponseDto(features.getId(), features.getName(),features.getCategory().getId());
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public List<FeaturesResponseDto> getFeaturesByType(String type) {
+        List<Features> featuresList;
+
+        if (type == null || type.isBlank()) {
+            featuresList = featuresRepository.findAll();
+        } else {
+            featuresList = featuresRepository.findByType(type.toUpperCase());
+        }
+
+        return featuresList.stream()
+                .map(f -> new FeaturesResponseDto(f.getId(), f.getName(), f.getCategory().getId()))
+                .collect(Collectors.toList());
     }
 }

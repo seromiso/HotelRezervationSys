@@ -129,7 +129,8 @@ public class HotelFeatureServiceImpl implements HotelFeatureService {
     private FeaturesResponseDto toResponseDto(Features feature) {
         return new FeaturesResponseDto(
                 feature.getId(),
-                feature.getName()
+                feature.getName(),
+                feature.getCategory().getId()
         );
     }
 }
