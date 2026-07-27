@@ -3,6 +3,7 @@ package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ConflictException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.InvalidRequestException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
+import com.finartzIntern.HotelRezervationSys.domain.mappers.BookingMapper;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.BookingCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.ReservationCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.ReservationGuestCreateRequestDto;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
+    private final BookingMapper bookingMapper;
     private final BookingRepository bookingRepository;
     private final ReservationRepository reservationRepository;
     private final ReservationGuestRepository reservationGuestRepository;
@@ -44,23 +46,11 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingResponseDto> getBookingsByUserId(Long userId) {
         return bookingRepository.findAllByUser_Id(userId)
                 .stream()
-                .map(this::toBookingResponse)
+                .map(bookingMapper::toBookingResponse)
                 .toList();
 
     }
 
-
-    private BookingResponseDto toBookingResponse(Booking booking){
-        return new BookingResponseDto(
-                booking.getId(),
-                booking.getUser().getId(),
-                booking.getBookingNumber(),
-                booking.getTotalAmount(),
-                booking.getStatus(),
-                booking.getPaymentStatus(),
-                booking.getCreatedAt()
-        );
-    }
 
     @Override
     @Transactional
@@ -130,7 +120,7 @@ public class BookingServiceImpl implements BookingService {
             );
         });
 
-        return toBookingResponse(savedBooking);
+        return bookingMapper.toBookingResponse(savedBooking);
     }
 
     @Override
@@ -160,95 +150,14 @@ public class BookingServiceImpl implements BookingService {
                                                     reservation.getId()
                                             );
 
-                            return toReservationDetailResponse(
+                            return bookingMapper.toReservationDetailResponse(
                                     reservation,
                                     guests
                             );
                         })
                         .toList();
 
-        return new BookingDetailResponseDto(
-                booking.getId(),
-                booking.getBookingNumber(),
-                booking.getTotalAmount(),
-                booking.getStatus(),
-                booking.getPaymentStatus(),
-                booking.getCreatedAt(),
-                reservationResponses
-        );
-    }
-
-    private ReservationDetailResponseDto toReservationDetailResponse(
-            Reservation reservation,
-            List<ReservationGuest> guests
-    ) {
-        List<ReservationGuestResponseDto> guestResponses =
-                guests.stream()
-                        .map(this::toReservationGuestResponse)
-                        .toList();
-
-        long nightCount = ChronoUnit.DAYS.between(
-                reservation.getCheckInDate(),
-                reservation.getCheckOutDate()
-        );
-
-        return new ReservationDetailResponseDto(
-                reservation.getId(),
-                toHotelResponse(reservation.getHotel()),
-                toRoomTypeResponse(reservation.getRoomType()),
-                reservation.getCheckInDate(),
-                reservation.getCheckOutDate(),
-                nightCount,
-                reservation.getAdultCount(),
-                reservation.getChildCount(),
-                reservation.getPricePerNight(),
-                reservation.getTotalPrice(),
-                reservation.getStatus(),
-                guestResponses
-        );
-    }
-
-    private ReservationGuestResponseDto toReservationGuestResponse(
-            ReservationGuest guest
-    ) {
-        return new ReservationGuestResponseDto(
-                guest.getId(),
-                guest.getName(),
-                guest.getSurname(),
-                guest.getGuestType(),
-                guest.getPrimaryGuest()
-        );
-    }
-
-    private BookingHotelResponseDto toHotelResponse(
-            Hotel hotel
-    ) {
-        return new BookingHotelResponseDto(
-                hotel.getId(),
-                hotel.getName(),
-                hotel.getCity(),
-                hotel.getDistrict(),
-                hotel.getAddress(),
-                hotel.getPhone(),
-                hotel.getCheckInTime(),
-                hotel.getCheckOutTime()
-        );
-    }
-
-    private RoomTypeResponseDto toRoomTypeResponse(
-            RoomType roomType
-    ) {
-        return new RoomTypeResponseDto(
-                roomType.getId(),
-                roomType.getTitle(),
-                roomType.getMaxAdults(),
-                roomType.getMaxChildren(),
-                roomType.getBaseCapacity(),
-                roomType.getBedConfiguration(),
-                roomType.getTotalInventory(),
-                roomType.getStatus(),
-                roomType.getCreatedAt()
-        );
+        return bookingMapper.toBookingDetailResponse(booking, reservationResponses);
     }
 
     private BigDecimal calculateTotalPrice(
