@@ -11,16 +11,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/room-types")
+@RequestMapping("/api/v1/owner/room-types")
 @RequiredArgsConstructor
 public class RoomTypeImageController {
 
     private final RoomTypeImageService roomTypeImageService;
-
-    @GetMapping("/{id}/images")
-    public ResponseEntity<List<RoomTypeImageResponseDto>> getImagesByRoomTypeId(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(roomTypeImageService.getImagesByRoomTypeId(id));
-    }
 
     @PostMapping("/{id}/images")
     public ResponseEntity<RoomTypeImageResponseDto> addImageToRoomType(

@@ -18,5 +18,4 @@ public interface HotelService  {
     HotelResponseDto createHotel(HotelCreateRequestDto requestDto);
     HotelResponseDto updateHotelInfo(Long id, HotelUpdateRequestDto updateRequestDto);
     HotelResponseDto updateHotelStatus(Long id, HotelStatus status); //adminin onaylama işlemi
-    List<RoomTypeSearchResponseDto> searchAvailableRooms(Long hotelId, LocalDate checkIn, LocalDate checkOut, Integer adults, Integer children);
 }
