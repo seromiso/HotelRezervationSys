@@ -9,4 +9,5 @@ import java.util.Optional;
 
 public interface FeaturesRepository extends JpaRepository<Features,Long> {
     Optional<Features> findById(Long id);
+    List<Features> findByType(String type);
 }

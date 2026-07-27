@@ -1,12 +1,16 @@
 package com.finartzIntern.HotelRezervationSys.domain.model.dtos.request;
 
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class HotelImageCreateRequestDto {
+    private List<ImageItem> images;
 
-    private Long hotelId;
-    private Long categoryId;
-    private String imageUrl;
-    private Integer displayOrder;
+    @Data
+    public static class ImageItem {
+        private String url;
+        private Long categoryId;
+        private Integer displayOrder;
+    }
 }

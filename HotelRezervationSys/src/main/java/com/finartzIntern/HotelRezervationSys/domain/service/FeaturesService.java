@@ -12,4 +12,6 @@ public interface FeaturesService {
     List<FeaturesResponseDto> getAllFeatures();
 
     FeaturesResponseDto getFeatureById(Long id);
+
+    List<FeaturesResponseDto> getFeaturesByType(String type);
 }

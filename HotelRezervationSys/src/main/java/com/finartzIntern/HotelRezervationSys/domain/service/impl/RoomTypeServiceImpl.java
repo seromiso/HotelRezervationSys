@@ -170,7 +170,7 @@ public class RoomTypeServiceImpl implements RoomTypeService {
                 )).toList();
 
         List<RoomTypeFeatureResponseDto> features = roomTypeFeatureRepository
-                .findByRoomTypeId(id)
+                .findByRoomType_Id(id)
                 .stream()
                 .map(RoomTypeFeatureResponseDto::from)
                 .toList();
