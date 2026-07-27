@@ -4,7 +4,7 @@ import com.finartzIntern.HotelRezervationSys.domain.exceptions.ConflictException
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.InvalidRequestException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.BookingCreateRequestDto;
-import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingResponseDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.*;
 
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.*;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.BookingStatus;
@@ -45,20 +45,6 @@ public class BookingServiceImpl implements BookingService {
 
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public BookingResponseDto getBookingByBookingNumber(String bookingNumber) {
-
-        Booking booking = bookingRepository
-                .findByBookingNumber(bookingNumber)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "error.booking.not.found"
-                        )
-                );
-
-        return toBookingResponse(booking);
-    }
 
     private BookingResponseDto toBookingResponse(Booking booking){
         return new BookingResponseDto(
@@ -138,6 +124,124 @@ public class BookingServiceImpl implements BookingService {
         );
 
         return toBookingResponse(savedBooking);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BookingDetailResponseDto getBookingDetailByBookingNumber(
+            String bookingNumber
+    ) {
+        Booking booking = bookingRepository
+                .findByBookingNumber(bookingNumber)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "error.booking.not.found"
+                        )
+                );
+
+        List<Reservation> reservations =
+                reservationRepository.findAllByBooking_Id(
+                        booking.getId()
+                );
+
+        List<ReservationDetailResponseDto> reservationResponses =
+                reservations.stream()
+                        .map(reservation -> {
+                            List<ReservationGuest> guests =
+                                    reservationGuestRepository
+                                            .findAllByReservation_Id(
+                                                    reservation.getId()
+                                            );
+
+                            return toReservationDetailResponse(
+                                    reservation,
+                                    guests
+                            );
+                        })
+                        .toList();
+
+        return new BookingDetailResponseDto(
+                booking.getId(),
+                booking.getBookingNumber(),
+                booking.getTotalAmount(),
+                booking.getStatus(),
+                booking.getPaymentStatus(),
+                booking.getCreatedAt(),
+                reservationResponses
+        );
+    }
+
+    private ReservationDetailResponseDto toReservationDetailResponse(
+            Reservation reservation,
+            List<ReservationGuest> guests
+    ) {
+        List<ReservationGuestResponseDto> guestResponses =
+                guests.stream()
+                        .map(this::toReservationGuestResponse)
+                        .toList();
+
+        long nightCount = ChronoUnit.DAYS.between(
+                reservation.getCheckInDate(),
+                reservation.getCheckOutDate()
+        );
+
+        return new ReservationDetailResponseDto(
+                reservation.getId(),
+                toHotelResponse(reservation.getHotel()),
+                toRoomTypeResponse(reservation.getRoomType()),
+                reservation.getCheckInDate(),
+                reservation.getCheckOutDate(),
+                nightCount,
+                reservation.getAdultCount(),
+                reservation.getChildCount(),
+                reservation.getPricePerNight(),
+                reservation.getTotalPrice(),
+                reservation.getStatus(),
+                guestResponses
+        );
+    }
+
+    private ReservationGuestResponseDto toReservationGuestResponse(
+            ReservationGuest guest
+    ) {
+        return new ReservationGuestResponseDto(
+                guest.getId(),
+                guest.getName(),
+                guest.getSurname(),
+                guest.getGuestType(),
+                guest.getPrimaryGuest()
+        );
+    }
+
+    private BookingHotelResponseDto toHotelResponse(
+            Hotel hotel
+    ) {
+        return new BookingHotelResponseDto(
+                hotel.getId(),
+                hotel.getName(),
+                hotel.getCity(),
+                hotel.getDistrict(),
+                hotel.getAddress(),
+                hotel.getPhone(),
+                hotel.getCheckInTime(),
+                hotel.getCheckOutTime()
+        );
+    }
+
+    private RoomTypeResponseDto toRoomTypeResponse(
+            RoomType roomType
+    ) {
+        return new RoomTypeResponseDto(
+                roomType.getId(),
+                roomType.getTitle(),
+                roomType.getMaxAdults(),
+                roomType.getMaxChildren(),
+                roomType.getBaseCapacity(),
+                roomType.getBedConfiguration(),
+                roomType.getTotalInventory(),
+                roomType.getStatus(),
+                roomType.getCreatedAt()
+        );
     }
 
     private BigDecimal calculateTotalPrice(

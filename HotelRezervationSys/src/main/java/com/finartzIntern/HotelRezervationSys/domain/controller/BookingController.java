@@ -1,6 +1,7 @@
 package com.finartzIntern.HotelRezervationSys.domain.controller;
 
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.BookingCreateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingDetailResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.service.BookingService;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +24,11 @@ public class BookingController {
     }
 
     @GetMapping("/{bookingNumber}")
-    public ResponseEntity<BookingResponseDto> getBookingByBookingNumber(
+    public ResponseEntity<BookingDetailResponseDto> getBookingDetailByBookingNumber(
             @PathVariable String bookingNumber
     ) {
         return ResponseEntity.ok(
-                bookingService.getBookingByBookingNumber(bookingNumber)
+                bookingService.getBookingDetailByBookingNumber(bookingNumber)
         );
     }
 
