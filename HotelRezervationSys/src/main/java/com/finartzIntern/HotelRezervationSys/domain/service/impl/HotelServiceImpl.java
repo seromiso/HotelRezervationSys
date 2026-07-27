@@ -113,49 +113,4 @@ public class HotelServiceImpl implements HotelService {
         Hotel updatedHotel = hotelRepository.save(hotel);
         return hotelMapper.toResponseDto(updatedHotel);
     }
-
-    @Override
-    public List<RoomTypeSearchResponseDto> searchAvailableRooms(
-            Long hotelId, LocalDate checkIn, LocalDate checkOut, Integer adults, Integer children) {
-
-        long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
-        if (nights <= 0) {
-            throw new IllegalArgumentException("Çıkış tarihi, giriş tarihinden önce veya aynı gün olamaz.");
-        }
-
-        List<RoomType> activeRooms = roomTypeRepository.findByHotelIdAndStatus(hotelId, RoomTypeStatus.ACTIVE);
-
-        return activeRooms.stream()
-                .filter(rt -> rt.getMaxAdults() >= adults && rt.getMaxChildren() >= children)
-                .map(rt -> {
-                    BigDecimal pricePerNight = roomPriceRepository
-                            .findFirstByRoomTypeIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
-                                    rt.getId(), checkIn, checkOut)
-                            .map(RoomPrice::getPricePerNight)
-                            .orElse(BigDecimal.ZERO);
-
-                    BigDecimal totalPrice = pricePerNight.multiply(BigDecimal.valueOf(nights));
-
-                    boolean isAvailable = availabilityService.checkAvailability(
-                            rt.getId(), rt.getTotalInventory(), checkIn, checkOut);
-
-                    String coverImage = rt.getImages().isEmpty() ? null : rt.getImages().get(0).getImageUrl();
-                    List<RoomTypeFeatureResponseDto> features = rt.getFeatures().stream()
-                            .map(RoomTypeFeatureResponseDto::from)
-                            .toList();
-
-                    return new RoomTypeSearchResponseDto(
-                            rt.getId(),
-                            rt.getTitle(),
-                            rt.getMaxAdults(),
-                            rt.getMaxChildren(),
-                            features,
-                            coverImage,
-                            totalPrice,
-                            isAvailable
-                    );
-                })
-                .toList();
-    }
-
 }

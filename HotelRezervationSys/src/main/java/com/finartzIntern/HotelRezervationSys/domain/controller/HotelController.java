@@ -1,5 +1,6 @@
 package com.finartzIntern.HotelRezervationSys.domain.controller;
 
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.HotelResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomTypeSearchResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.service.HotelService;
 import lombok.RequiredArgsConstructor;
@@ -18,19 +19,9 @@ public class HotelController {
     // DÜZELTME: 'private final' eklendi
     private final HotelService hotelService;
 
-    // YENİ EKLENEN ENDPOINT
-    @GetMapping("/{id}/room-types")
-    public ResponseEntity<List<RoomTypeSearchResponseDto>> searchHotelRooms(
-            @PathVariable("id") Long id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut,
-            @RequestParam Integer adults,
-            @RequestParam Integer children) {
-
-        List<RoomTypeSearchResponseDto> response = hotelService.searchAvailableRooms(
-                id, checkIn, checkOut, adults, children
-        );
-
-        return ResponseEntity.ok(response);
+    // Belirli bir otelin genel detaylarını getirir (Odaları aramaz, sadece oteli tanıtır)
+    @GetMapping("/{id}")
+    public ResponseEntity<HotelResponseDto> getHotelById(@PathVariable Long id) {
+        return ResponseEntity.ok(hotelService.getHotelById(id));
     }
 }
