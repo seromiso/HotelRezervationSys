@@ -9,7 +9,8 @@ public interface PaymentService {
 
     PaymentResponseDto getPaymentById(Long id);
 
-    PaymentResponseDto createPayment(PaymentCreateRequestDto paymentRequestDto);
+    PaymentResponseDto createPayment(Long bookingId,
+                                     PaymentCreateRequestDto paymentRequestDto);
 
     List<PaymentResponseDto> getAllPayments();
 

@@ -1,5 +1,5 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
-
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.PaymentCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.PaymentResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Booking;
@@ -11,7 +11,8 @@ import com.finartzIntern.HotelRezervationSys.domain.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ConflictException;
+import com.finartzIntern.HotelRezervationSys.domain.model.enums.BookingStatus;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,8 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentResponseDto getPaymentById(Long id) {
 
         Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Ödeme bulunamadı! ID: " + id));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("error.payment.not.found"));
 
         PaymentResponseDto response = new PaymentResponseDto();
 
@@ -45,10 +47,16 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public PaymentResponseDto createPayment(PaymentCreateRequestDto paymentRequestDto) {
+    public PaymentResponseDto createPayment(Long bookingId,
+                                            PaymentCreateRequestDto paymentRequestDto) {
 
-        Booking booking = bookingRepository.findById(paymentRequestDto.getBookingId())
-                .orElseThrow(() -> new RuntimeException("Rezervasyon bulunamadı!"));
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("error.booking.not.found"));
+
+        if (!booking.getStatus().equals(BookingStatus.PENDING)) {
+            throw new ConflictException("error.payment.not.allowed");
+        }
 
         Payment payment = new Payment();
 
@@ -57,10 +65,15 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setCurrency(paymentRequestDto.getCurrency());
         payment.setPaymentMethod(paymentRequestDto.getPaymentMethod());
 
-        // Kullanıcı göndermez, sistem belirler
-        payment.setStatus(PaymentStatus.PENDING);
+
+        payment.setStatus(PaymentStatus.PAID);
+
+        booking.markPaymentAsPaid();
+        booking.confirmBooking();
 
         Payment savedPayment = paymentRepository.save(payment);
+
+        bookingRepository.save(booking);
 
         PaymentResponseDto response = new PaymentResponseDto();
 

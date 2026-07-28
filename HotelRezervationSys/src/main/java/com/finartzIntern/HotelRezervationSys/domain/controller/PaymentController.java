@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/v1/payments")
+@RequestMapping("api/v1/bookings")
 @RequiredArgsConstructor
 public class PaymentController {
 
@@ -23,10 +23,14 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping
-    public ResponseEntity<PaymentResponseDto> createPayment(@RequestBody PaymentCreateRequestDto paymentRequestDto) {
-        // Ödeme başarıyla oluşturulduğunda REST standartlarına göre 201 (CREATED) dönmek en iyisidir.
-        PaymentResponseDto response = paymentService.createPayment(paymentRequestDto);
+    @PostMapping("/{bookingId}/payments")
+    public ResponseEntity<PaymentResponseDto> createPayment(
+            @PathVariable Long bookingId,
+            @RequestBody PaymentCreateRequestDto paymentRequestDto) {
+
+        PaymentResponseDto response =
+                paymentService.createPayment(bookingId, paymentRequestDto);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -35,5 +39,6 @@ public class PaymentController {
         List<PaymentResponseDto> response = paymentService.getAllPayments();
         return ResponseEntity.ok(response);
     }
+
 
 }

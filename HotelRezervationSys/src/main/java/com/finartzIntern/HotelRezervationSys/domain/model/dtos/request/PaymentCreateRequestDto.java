@@ -8,8 +8,9 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class PaymentCreateRequestDto {
-    private Long bookingId;
+
     private BigDecimal amount;
     private String currency;
     private String paymentMethod;
+
 }
