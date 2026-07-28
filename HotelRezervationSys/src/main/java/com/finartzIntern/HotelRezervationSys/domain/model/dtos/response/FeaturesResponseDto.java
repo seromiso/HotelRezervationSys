@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class FeaturesResponseDto {
     private Long id;
     private String name;
+    private Long categoryId;
 }
