@@ -10,6 +10,8 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "reservations")
@@ -86,6 +88,14 @@ public class Reservation {
         this.createdAt = now;
         this.updatedAt = now;
     }
+
+    @OneToMany(
+            mappedBy = "reservation",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<ReservationGuest> guests = new ArrayList<>();
 
     @PreUpdate
     protected void onUpdate() {
