@@ -3,8 +3,11 @@ package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ConflictException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.InvalidRequestException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
+import com.finartzIntern.HotelRezervationSys.domain.mappers.BookingMapper;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.BookingCreateRequestDto;
-import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.BookingResponseDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.ReservationCreateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.ReservationGuestCreateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.*;
 
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.*;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.BookingStatus;
@@ -21,12 +24,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
+    private final BookingMapper bookingMapper;
     private final BookingRepository bookingRepository;
     private final ReservationRepository reservationRepository;
     private final ReservationGuestRepository reservationGuestRepository;
@@ -40,15 +46,88 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingResponseDto> getBookingsByUserId(Long userId) {
         return bookingRepository.findAllByUser_Id(userId)
                 .stream()
-                .map(this::toBookingResponse)
+                .map(bookingMapper::toBookingResponse)
                 .toList();
 
     }
 
+
+    @Override
+    @Transactional
+    public BookingResponseDto createBooking(
+            BookingCreateRequestDto request
+    ) {
+        User currentUser = findUser(request.userId());
+
+        validateReservationsNotEmpty(
+                request.reservations()
+        );
+
+        validateAllReservationsBelongToSameHotel(
+                request.reservations()
+        );
+
+        Hotel hotel = findHotel(
+                request.reservations()
+                        .getFirst()
+                        .hotelId()
+        );
+
+        List<PreparedReservation> preparedReservations =
+                request.reservations()
+                        .stream()
+                        .map(reservationRequest ->
+                                prepareReservation(
+                                        hotel,
+                                        reservationRequest
+                                )
+                        )
+                        .toList();
+
+        validateAllReservationsHaveSameDates(
+                request.reservations()
+        );
+
+        validateRequestedRoomAvailability(
+                request.reservations()
+        );
+
+        BigDecimal bookingTotalAmount =
+                calculateBookingTotal(
+                        preparedReservations
+                );
+
+        Booking savedBooking =
+                saveBooking(
+                        currentUser,
+                        bookingTotalAmount
+                );
+
+        preparedReservations.forEach(preparedReservation -> {
+            Reservation savedReservation =
+                    saveReservation(
+                            savedBooking,
+                            hotel,
+                            preparedReservation.roomType(),
+                            preparedReservation.roomPrice(),
+                            preparedReservation.request(),
+                            preparedReservation.totalPrice()
+                    );
+
+            saveReservationGuests(
+                    savedReservation,
+                    preparedReservation.request().guests()
+            );
+        });
+
+        return bookingMapper.toBookingResponse(savedBooking);
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public BookingResponseDto getBookingByBookingNumber(String bookingNumber) {
-
+    public BookingDetailResponseDto getBookingDetailByBookingNumber(
+            String bookingNumber
+    ) {
         Booking booking = bookingRepository
                 .findByBookingNumber(bookingNumber)
                 .orElseThrow(() ->
@@ -57,99 +136,35 @@ public class BookingServiceImpl implements BookingService {
                         )
                 );
 
-        return toBookingResponse(booking);
-    }
-
-    private BookingResponseDto toBookingResponse(Booking booking){
-        return new BookingResponseDto(
-                booking.getId(),
-                booking.getUser().getId(),
-                booking.getBookingNumber(),
-                booking.getTotalAmount(),
-                booking.getStatus(),
-                booking.getPaymentStatus(),
-                booking.getCreatedAt()
-        );
-    }
-
-    @Override
-    @Transactional
-    public BookingResponseDto createBooking(
-            BookingCreateRequestDto request
-    ) {
-        // 1. Giriş yapan kullanıcıyı bul
-        // 2. Hotel ve RoomType entity'lerini yükle
-        // 3. RoomType-hotel ilişkisini doğrula
-        // 4. Tarihleri doğrula
-        // 5. Kişi sayısı ve guest listesini doğrula
-        // 6. Kapasiteyi doğrula
-        // 7. Müsaitliği yeniden kontrol et
-        // 8. Güncel fiyatı hesapla
-        // 9. Booking kaydet
-        // 10. Reservation kaydet
-        // 11. ReservationGuest kayıtlarını kaydet
-        // 12. Response döndür
-
-        User currentUser = findUser(request.userId());
-
-        Hotel hotel = findHotel(request.reservation().hotelId());
-
-        RoomType roomType = findRoomType(request.reservation().roomTypeId());
-
-        validateRoomTypeBelongsToHotel(roomType, hotel);
-        validateRoomTypeStatus(roomType);
-        validateDates(request);
-        validateGuestInformation(request);
-        validateCapacity(roomType, request);
-
-        validateAvailability(roomType, request);
-
-        RoomPrice roomPrice =
-                findRoomPriceForReservation(
-                        roomType,
-                        request
+        List<Reservation> reservations =
+                reservationRepository.findAllByBooking_Id(
+                        booking.getId()
                 );
 
-        BigDecimal totalPrice =
-                calculateTotalPrice(
-                        roomPrice,
-                        request
-                );
+        List<ReservationDetailResponseDto> reservationResponses =
+                reservations.stream()
+                        .map(reservation -> {
+                            List<ReservationGuest> guests =
+                                    reservationGuestRepository
+                                            .findAllByReservation_Id(
+                                                    reservation.getId()
+                                            );
 
-        Booking savedBooking =
-                saveBooking(
-                        currentUser,
-                        totalPrice
-                );
+                            return bookingMapper.toReservationDetailResponse(
+                                    reservation,
+                                    guests
+                            );
+                        })
+                        .toList();
 
-        Reservation savedReservation =
-                saveReservation(
-                        savedBooking,
-                        hotel,
-                        roomType,
-                        roomPrice,
-                        request,
-                        totalPrice
-                );
-
-        saveReservationGuests(
-                savedReservation,
-                request
-        );
-
-        return toBookingResponse(savedBooking);
+        return bookingMapper.toBookingDetailResponse(booking, reservationResponses);
     }
 
     private BigDecimal calculateTotalPrice(
             RoomPrice roomPrice,
-            BookingCreateRequestDto request
+            LocalDate checkInDate,
+            LocalDate checkOutDate
     ) {
-        LocalDate checkInDate =
-                request.reservation().checkInDate();
-
-        LocalDate checkOutDate =
-                request.reservation().checkOutDate();
-
         long numberOfNights =
                 ChronoUnit.DAYS.between(
                         checkInDate,
@@ -201,19 +216,55 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    private void validateDates(
-            BookingCreateRequestDto request
+    private void validateRequestedRoomAvailability(
+            List<ReservationCreateRequestDto> reservations
     ) {
-        LocalDate checkInDate =
-                request.reservation().checkInDate();
+        Map<RoomAvailabilityKey, Long> requestedRoomCounts =
+                reservations.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        reservation ->
+                                                new RoomAvailabilityKey(
+                                                        reservation.roomTypeId(),
+                                                        reservation.checkInDate(),
+                                                        reservation.checkOutDate()
+                                                ),
+                                        Collectors.counting()
+                                )
+                        );
 
-        LocalDate checkOutDate =
-                request.reservation().checkOutDate();
+        requestedRoomCounts.forEach((key, requestedRoomCount) -> {
+            RoomType roomType =
+                    findRoomType(key.roomTypeId());
 
+            long reservedRoomCount =
+                    reservationRepository
+                            .countOverlappingReservations(
+                                    key.roomTypeId(),
+                                    key.checkInDate(),
+                                    key.checkOutDate(),
+                                    ReservationStatus.CANCELLED
+                            );
+
+            long availableRoomCount =
+                    roomType.getTotalInventory()
+                            - reservedRoomCount;
+
+            if (requestedRoomCount > availableRoomCount) {
+                throw new ConflictException(
+                        "error.booking.insufficient.room.availability"
+                );
+            }
+        });
+    }
+
+    private void validateDates(
+            LocalDate checkInDate,
+            LocalDate checkOutDate
+    ) {
         if (checkInDate == null || checkOutDate == null) {
             throw new InvalidRequestException(
                     "error.booking.dates.required"
-
             );
         }
 
@@ -232,11 +283,9 @@ public class BookingServiceImpl implements BookingService {
 
     private void validateCapacity(
             RoomType roomType,
-            BookingCreateRequestDto request
+            Integer adultCount,
+            Integer childCount
     ) {
-        Integer adultCount = request.reservation().adultCount();
-        Integer childCount = request.reservation().childCount();
-
         if (adultCount == null || adultCount <= 0) {
             throw new InvalidRequestException(
                     "error.booking.adult.required"
@@ -254,7 +303,8 @@ public class BookingServiceImpl implements BookingService {
 
         boolean capacityExceeded =
                 adultCount > roomType.getMaxAdults()
-                        || normalizedChildCount > roomType.getMaxChildren()
+                        || normalizedChildCount
+                        > roomType.getMaxChildren()
                         || adultCount + normalizedChildCount
                         > roomType.getBaseCapacity();
 
@@ -266,7 +316,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void validateGuestInformation(
-            BookingCreateRequestDto request
+            ReservationCreateRequestDto request
     ) {
         if (request.guests() == null
                 || request.guests().isEmpty()) {
@@ -275,16 +325,13 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
-        int adultCount =
-                request.reservation().adultCount();
-
         int childCount =
-                request.reservation().childCount() == null
+                request.childCount() == null
                         ? 0
-                        : request.reservation().childCount();
+                        : request.childCount();
 
         int expectedGuestCount =
-                adultCount + childCount;
+                request.adultCount() + childCount;
 
         if (request.guests().size() != expectedGuestCount) {
             throw new InvalidRequestException(
@@ -292,14 +339,15 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
-        long primaryGuestCount = request.guests()
-                .stream()
-                .filter(guest ->
-                        Boolean.TRUE.equals(
-                                guest.primaryGuest()
+        long primaryGuestCount =
+                request.guests()
+                        .stream()
+                        .filter(guest ->
+                                Boolean.TRUE.equals(
+                                        guest.primaryGuest()
+                                )
                         )
-                )
-                .count();
+                        .count();
 
         if (primaryGuestCount != 1) {
             throw new InvalidRequestException(
@@ -310,28 +358,8 @@ public class BookingServiceImpl implements BookingService {
 
     private void validateRoomTypeStatus(RoomType roomType) {
         if (roomType.getStatus() != RoomTypeStatus.ACTIVE) {
-            throw new IllegalArgumentException(
-                    "error.booking.room.unavailable"
-            );
-        }
-    }
-
-    private void validateAvailability(
-            RoomType roomType,
-            BookingCreateRequestDto request
-    ) {
-        long reservedRoomCount =
-                reservationRepository.countOverlappingReservations(
-                        roomType.getId(),
-                        request.reservation().checkInDate(),
-                        request.reservation().checkOutDate(),
-                        ReservationStatus.CANCELLED
-                );
-
-        if (reservedRoomCount >= roomType.getTotalInventory()) {
-
             throw new ConflictException(
-                    "error.booking.no.availability"
+                    "error.booking.room.unavailable"
             );
         }
     }
@@ -368,39 +396,26 @@ public class BookingServiceImpl implements BookingService {
             Hotel hotel,
             RoomType roomType,
             RoomPrice roomPrice,
-            BookingCreateRequestDto request,
+            ReservationCreateRequestDto request,
             BigDecimal totalPrice
-    ){
+    ) {
         Reservation reservation = new Reservation();
 
         reservation.setBooking(booking);
         reservation.setHotel(hotel);
         reservation.setRoomType(roomType);
-
-        reservation.setCheckInDate(
-                request.reservation().checkInDate()
-        );
-
-        reservation.setCheckOutDate(
-                request.reservation().checkOutDate()
-        );
-
-        reservation.setAdultCount(
-                request.reservation().adultCount()
-        );
-
+        reservation.setCheckInDate(request.checkInDate());
+        reservation.setCheckOutDate(request.checkOutDate());
+        reservation.setAdultCount(request.adultCount());
         reservation.setChildCount(
-                request.reservation().childCount() == null
+                request.childCount() == null
                         ? 0
-                        : request.reservation().childCount()
+                        : request.childCount()
         );
-
         reservation.setPricePerNight(
                 roomPrice.getPricePerNight()
         );
-
         reservation.setTotalPrice(totalPrice);
-
         reservation.setStatus(
                 ReservationStatus.PENDING
         );
@@ -410,14 +425,9 @@ public class BookingServiceImpl implements BookingService {
 
     private RoomPrice findRoomPriceForReservation(
             RoomType roomType,
-            BookingCreateRequestDto request
+            LocalDate checkInDate,
+            LocalDate checkOutDate
     ) {
-        LocalDate checkInDate =
-                request.reservation().checkInDate();
-
-        LocalDate checkOutDate =
-                request.reservation().checkOutDate();
-
         return roomPriceRepository
                 .findFirstByRoomTypeIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
                         roomType.getId(),
@@ -425,19 +435,18 @@ public class BookingServiceImpl implements BookingService {
                         checkOutDate
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "No price information found for selected dates."
+                        new ResourceNotFoundException(
+                                "error.room.price.not.found"
                         )
                 );
     }
 
     private void saveReservationGuests(
             Reservation reservation,
-            BookingCreateRequestDto request
+            List<ReservationGuestCreateRequestDto> guestRequests
     ) {
         List<ReservationGuest> guests =
-                request.guests()
-                        .stream()
+                guestRequests.stream()
                         .map(guestRequest -> {
                             ReservationGuest guest =
                                     new ReservationGuest();
@@ -464,4 +473,128 @@ public class BookingServiceImpl implements BookingService {
 
         reservationGuestRepository.saveAll(guests);
     }
+
+    private void validateAllReservationsBelongToSameHotel(
+            List<ReservationCreateRequestDto> reservations
+    ) {
+        long distinctHotelCount =
+                reservations.stream()
+                        .map(ReservationCreateRequestDto::hotelId)
+                        .distinct()
+                        .count();
+
+        if (distinctHotelCount != 1) {
+            throw new InvalidRequestException(
+                    "error.booking.multiple.hotels.not.allowed"
+            );
+        }
+    }
+
+    private void validateReservationsNotEmpty(
+            List<ReservationCreateRequestDto> reservations
+    ) {
+        if (reservations == null || reservations.isEmpty()) {
+            throw new InvalidRequestException(
+                    "error.booking.reservation.required"
+            );
+        }
+    }
+
+    private void validateAllReservationsHaveSameDates(
+            List<ReservationCreateRequestDto> reservations
+    ) {
+        ReservationCreateRequestDto firstReservation =
+                reservations.getFirst();
+
+        boolean hasDifferentDates =
+                reservations.stream()
+                        .anyMatch(reservation ->
+                                !firstReservation.checkInDate()
+                                        .equals(reservation.checkInDate())
+                                        || !firstReservation.checkOutDate()
+                                        .equals(reservation.checkOutDate())
+                        );
+
+        if (hasDifferentDates) {
+            throw new InvalidRequestException(
+                    "error.booking.different.dates.not.allowed"
+            );
+        }
+    }
+
+    private BigDecimal calculateBookingTotal(
+            List<PreparedReservation> preparedReservations
+    ) {
+        return preparedReservations.stream()
+                .map(PreparedReservation::totalPrice)
+                .reduce(
+                        BigDecimal.ZERO,
+                        BigDecimal::add
+                );
+    }
+
+    private PreparedReservation prepareReservation(
+            Hotel hotel,
+            ReservationCreateRequestDto request
+    ) {
+        RoomType roomType =
+                findRoomType(request.roomTypeId());
+
+        validateRoomTypeBelongsToHotel(
+                roomType,
+                hotel
+        );
+
+        validateRoomTypeStatus(roomType);
+
+        validateDates(
+                request.checkInDate(),
+                request.checkOutDate()
+        );
+
+        validateCapacity(
+                roomType,
+                request.adultCount(),
+                request.childCount()
+        );
+
+        validateGuestInformation(request);
+
+        RoomPrice roomPrice =
+                findRoomPriceForReservation(
+                        roomType,
+                        request.checkInDate(),
+                        request.checkOutDate()
+                );
+
+        BigDecimal totalPrice =
+                calculateTotalPrice(
+                        roomPrice,
+                        request.checkInDate(),
+                        request.checkOutDate()
+                );
+
+        return new PreparedReservation(
+                request,
+                roomType,
+                roomPrice,
+                totalPrice
+        );
+    }
+
+    private record PreparedReservation(
+            ReservationCreateRequestDto request,
+            RoomType roomType,
+            RoomPrice roomPrice,
+            BigDecimal totalPrice
+    ) {
+    }
+
+    private record RoomAvailabilityKey(
+            Long roomTypeId,
+            LocalDate checkInDate,
+            LocalDate checkOutDate
+    ) {
+    }
 }
+

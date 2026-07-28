@@ -28,4 +28,16 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("checkOutDate") LocalDate checkOutDate,
             @Param("cancelledStatus") ReservationStatus cancelledStatus
     );
+
+    @Query("""
+            SELECT COUNT(r)
+            FROM Reservation r
+            WHERE r.roomType.id = :roomTypeId
+              AND r.status <> :cancelledStatus
+              AND r.checkOutDate >= CURRENT_DATE
+            """)
+    int countActiveReservationsByRoomTypeId(
+            @Param("roomTypeId") Long roomTypeId,
+            @Param("cancelledStatus") ReservationStatus cancelledStatus
+    );
 }

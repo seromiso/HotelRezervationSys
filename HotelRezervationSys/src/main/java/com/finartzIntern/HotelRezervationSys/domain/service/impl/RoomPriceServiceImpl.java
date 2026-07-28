@@ -1,5 +1,6 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ConflictException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.InvalidRequestException;
 import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.RoomPriceCreateRequestDto;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -45,51 +45,12 @@ public class RoomPriceServiceImpl implements RoomPriceService {
                 .findByRoomTypeIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
                         roomTypeId, newEnd, newStart);
 
-        List<RoomPrice> pricesToDelete = new ArrayList<>();
-        List<RoomPrice> pricesToSave = new ArrayList<>();
-
-        // 3. PARÇALAMA ALGORİTMASI
-        for (RoomPrice existing : overlappingPrices) {
-            boolean startsBefore = existing.getStartDate().isBefore(newStart);
-            boolean endsAfter = existing.getEndDate().isAfter(newEnd);
-
-            if (startsBefore && endsAfter) {
-                // İhtimal 1: İÇİNE DÜŞME (Ortadan Bölünme)
-
-                // Sağ tarafı yeni bir kayıt olarak oluştur
-                RoomPrice rightPart = new RoomPrice();
-                rightPart.setRoomType(roomType);
-                rightPart.setCurrency(existing.getCurrency());
-                rightPart.setPricePerNight(existing.getPricePerNight());
-                rightPart.setStartDate(newEnd.plusDays(1)); // Yeni fiyatın bittiği günün ertesi
-                rightPart.setEndDate(existing.getEndDate());
-                pricesToSave.add(rightPart);
-
-                // Sol taraf için mevcut kaydı güncelle
-                existing.setEndDate(newStart.minusDays(1)); // Yeni fiyatın başladığı günden bir önceki gün
-                pricesToSave.add(existing);
-
-            } else if (startsBefore && !endsAfter) {
-                // İhtimal 2: SAĞDAN EZME
-                existing.setEndDate(newStart.minusDays(1));
-                pricesToSave.add(existing);
-
-            } else if (!startsBefore && endsAfter) {
-                // İhtimal 3: SOLDAN EZME
-                existing.setStartDate(newEnd.plusDays(1));
-                pricesToSave.add(existing);
-
-            } else {
-                // İhtimal 4: TAMAMEN YUTMA
-                pricesToDelete.add(existing);
-            }
+        // 3. İŞ KURALI: Eğer çakışan bir tarih aralığı varsa hata fırlat (HTTP 409 Conflict mantığı)
+        if (!overlappingPrices.isEmpty()) {
+            throw new ConflictException("Bu tarih aralığı mevcut bir fiyatlandırmayla çakışıyor!");
         }
 
-        // 4. Değişiklikleri Veritabanına Yansıt
-        roomPriceRepository.deleteAll(pricesToDelete);
-        roomPriceRepository.saveAll(pricesToSave);
-
-        // 5. Yepyeni Fiyatımızı Kaydet
+        // 4. Yepyeni Fiyatımızı Kaydet
         RoomPrice newPrice = new RoomPrice();
         newPrice.setRoomType(roomType);
         newPrice.setStartDate(newStart);
@@ -133,5 +94,50 @@ public class RoomPriceServiceImpl implements RoomPriceService {
         RoomPrice roomPrice = roomPriceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Silinecek fiyat bulunamadı!"));
         roomPriceRepository.delete(roomPrice);
+    }
+
+    @Override
+    @Transactional
+    public RoomPriceResponseDto updateRoomPrice(Long priceId, RoomPriceCreateRequestDto requestDto) {
+
+        // 1. Mevcut fiyatı veritabanından bul
+        RoomPrice existingPrice = roomPriceRepository.findById(priceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Güncellenecek fiyat bulunamadı!"));
+
+        // 2. Tarih mantık kontrolü
+        if (requestDto.endDate().isBefore(requestDto.startDate())) {
+            throw new InvalidRequestException("Bitiş tarihi, başlangıç tarihinden önce olamaz!");
+        }
+
+        // 3. Kesişen fiyatları bul (Mevcut repository metodunu tekrar kullanıyoruz)
+        List<RoomPrice> overlappingPrices = roomPriceRepository
+                .findByRoomTypeIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                        existingPrice.getRoomType().getId(), requestDto.endDate(), requestDto.startDate());
+
+        // 4. İŞ KURALI: Kendisi HARİÇ, çakışan başka bir tarih aralığı var mı kontrolü
+        boolean hasOverlap = overlappingPrices.stream()
+                .anyMatch(p -> !p.getId().equals(priceId)); // Kendi ID'si dışındakilere bak
+
+        if (hasOverlap) {
+            throw new ConflictException("Güncellenen tarihler başka bir fiyatlandırmayla çakışıyor!");
+        }
+
+        // 5. Bilgileri güncelle ve kaydet
+        existingPrice.setStartDate(requestDto.startDate());
+        existingPrice.setEndDate(requestDto.endDate());
+        existingPrice.setPricePerNight(requestDto.pricePerNight());
+        existingPrice.setCurrency(requestDto.currency());
+
+        RoomPrice updatedPrice = roomPriceRepository.save(existingPrice);
+
+        return new RoomPriceResponseDto(
+                updatedPrice.getId(),
+                updatedPrice.getRoomType().getId(),
+                updatedPrice.getStartDate(),
+                updatedPrice.getEndDate(),
+                updatedPrice.getPricePerNight(),
+                updatedPrice.getCurrency(),
+                updatedPrice.getCreatedAt()
+        );
     }
 }
