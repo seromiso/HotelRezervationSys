@@ -44,11 +44,17 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional(readOnly = true)
     public List<BookingResponseDto> getBookingsByUserId(Long userId) {
+
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException(
+                    "error.user.not.found"
+            );
+        }
+
         return bookingRepository.findAllByUser_Id(userId)
                 .stream()
                 .map(bookingMapper::toBookingResponse)
                 .toList();
-
     }
 
 

@@ -13,17 +13,17 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/bookings")
+@RequestMapping("/api/v1")
 public class BookingController {
 
     private final BookingService bookingService;
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/users/{userId}/bookings")
     public List<BookingResponseDto> getBookingsByUserId(@PathVariable Long userId) {
         return bookingService.getBookingsByUserId(userId);
     }
 
-    @GetMapping("/{bookingNumber}")
+    @GetMapping("/bookings/{bookingNumber}")
     public ResponseEntity<BookingDetailResponseDto> getBookingDetailByBookingNumber(
             @PathVariable String bookingNumber
     ) {
@@ -32,7 +32,7 @@ public class BookingController {
         );
     }
 
-    @PostMapping
+    @PostMapping("/bookings")
     @ResponseStatus(HttpStatus.CREATED)
     public BookingResponseDto createBooking(
             @RequestBody BookingCreateRequestDto request
