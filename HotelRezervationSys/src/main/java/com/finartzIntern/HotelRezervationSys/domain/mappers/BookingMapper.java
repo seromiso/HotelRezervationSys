@@ -48,6 +48,56 @@ public class BookingMapper {
         );
     }
 
+    public BookingDetailResponseDto toBookingDetailResponse(
+            Booking booking
+    ) {
+        List<ReservationDetailResponseDto> reservationDetails =
+                booking.getReservations()
+                        .stream()
+                        .map(this::toReservationDetailResponse)
+                        .toList();
+
+        return new BookingDetailResponseDto(
+                booking.getId(),
+                booking.getBookingNumber(),
+                booking.getTotalAmount(),
+                booking.getStatus(),
+                booking.getPaymentStatus(),
+                booking.getCreatedAt(),
+                reservationDetails
+        );
+    }
+
+    public ReservationDetailResponseDto toReservationDetailResponse(
+            Reservation reservation
+    ) {
+        List<ReservationGuestResponseDto> guestResponses =
+                reservation.getGuests()
+                        .stream()
+                        .map(this::toReservationGuestResponse)
+                        .toList();
+
+        long nightCount = ChronoUnit.DAYS.between(
+                reservation.getCheckInDate(),
+                reservation.getCheckOutDate()
+        );
+
+        return new ReservationDetailResponseDto(
+                reservation.getId(),
+                toHotelResponse(reservation.getHotel()),
+                toRoomTypeResponse(reservation.getRoomType()),
+                reservation.getCheckInDate(),
+                reservation.getCheckOutDate(),
+                nightCount,
+                reservation.getAdultCount(),
+                reservation.getChildCount(),
+                reservation.getPricePerNight(),
+                reservation.getTotalPrice(),
+                reservation.getStatus(),
+                guestResponses
+        );
+    }
+
     public ReservationDetailResponseDto toReservationDetailResponse(
             Reservation reservation,
             List<ReservationGuest> guests
