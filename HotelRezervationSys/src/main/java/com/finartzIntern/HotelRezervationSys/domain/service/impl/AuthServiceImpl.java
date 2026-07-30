@@ -1,6 +1,9 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
 
 import com.finartzIntern.HotelRezervationSys.config.JwtService;
+import com.finartzIntern.HotelRezervationSys.config.SecurityUtils;
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.BadRequestException;
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.LoginRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.RegisterRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.AuthResponseDto;
@@ -39,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Doğum tarihi boş bırakılamaz!");
         }
 
-        // Doğum tarihi ile şu anki tarih arasındaki farkı hesaplıyoruz
+        // Doğum tarihi ile şu anki tarih arasındaki fark
         int age = Period.between(request.birthDate(), LocalDate.now()).getYears();
 
         if (age < 18) {
@@ -57,12 +60,9 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setEmailVerified(false);
 
+
+        emailService.sendVerificationEmail(user);
         User savedUser = userRepository.save(user);
-        String verificationLink = "http://localhost:8080/api/v1/auth/verify?email=" + savedUser.getEmail();
-
-        // 3. Mail gönderme metodu
-        emailService.sendVerificationEmail(savedUser.getEmail(), savedUser.getName(), verificationLink);
-
 
         String jwtToken = jwtService.generateToken(savedUser);
         return new AuthResponseDto(jwtToken, savedUser.getEmail(), savedUser.getRole());
@@ -83,20 +83,42 @@ public class AuthServiceImpl implements AuthService {
          //Kullanıcı için yeni bir JWT üret
         String jwtToken = jwtService.generateToken(user);
 
-        // Token cevabını dön
+        // Token cevabı
         return new AuthResponseDto(jwtToken, user.getEmail(), user.getRole());
         }
 
         @Transactional
-        public void verifyEmail(String email) {
+        public AuthResponseDto verifyEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı!"));
 
-        user.setEmailVerified(true);       // E-postayı true yapıyoruz
-        user.setStatus(UserStatus.ACTIVE); // Statüyü PASSIVE'den ACTIVE'e çekiyoruz
+            if (!user.isEmailVerified()) {
+                user.setEmailVerified(true);
 
-        userRepository.save(user);
-      }
+                user.setStatus(UserStatus.ACTIVE);
+
+                userRepository.save(user);
+            }
+            String freshToken = jwtService.generateToken(user);
+
+            return new AuthResponseDto(
+                    freshToken,
+                    user.getEmail(),
+                    user.getRole()
+            );
+    }
+    @Override
+    public void resendVerificationEmail() {
+
+        User currentUser = SecurityUtils.getCurrentUser();
+
+        if (currentUser.isEmailVerified()) {
+            throw new BadRequestException("E-posta adresiniz zaten doğrulanmış!");
+        }
+
+
+        emailService.sendVerificationEmail(currentUser);
+    }
 
 
 }

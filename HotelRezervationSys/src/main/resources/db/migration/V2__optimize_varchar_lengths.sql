@@ -5,8 +5,7 @@
 
 -- 1. Hotels Tablosuna Nullable Giriş/Çıkış Saatlerinin Eklenmesi ve Optimizasyonu
 ALTER TABLE hotels
-    ADD COLUMN check_in_time varchar(5) NULL,   -- NULL (Boş bırakılabilir) yapıldı
-    ADD COLUMN check_out_time varchar(5) NULL,  -- NULL (Boş bırakılabilir) yapıldı
+
     ALTER COLUMN city TYPE varchar(50),
     ALTER COLUMN district TYPE varchar(50),
     ALTER COLUMN phone TYPE varchar(20),
@@ -44,4 +43,17 @@ ALTER TABLE payments
 
 
 -- V2 dosyasının en altına ekleyebilirsin:
-ALTER TABLE hotel_reviews ADD CONSTRAINT chk_review_rating CHECK (rating >= 1 AND rating <= 5);
+
+ALTER TABLE hotels
+    ADD COLUMN  IF NOT EXISTS averageRating NUMERIC(3, 1) DEFAULT 0.0;
+
+ALTER TABLE room_types ADD COLUMN  IF NOT EXISTS description TEXT;
+
+--otel kaydı için doküman tutma
+ALTER TABLE hotels ADD COLUMN  IF NOT EXISTS license_document_url VARCHAR(255);
+-- cities tablosundaki id kolonunu BIGINT (64-bit) yapıyoruz
+ALTER TABLE cities ALTER COLUMN id TYPE BIGINT;
+
+ALTER TABLE districts ALTER COLUMN city_id TYPE BIGINT;
+-- Eğer ilçenin kendi ID'si de serial ise onu da düzeltebilirsin:
+ALTER TABLE districts ALTER COLUMN id TYPE BIGINT;

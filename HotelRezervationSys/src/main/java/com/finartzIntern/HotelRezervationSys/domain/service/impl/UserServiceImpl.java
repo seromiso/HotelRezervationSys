@@ -1,11 +1,18 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
+import com.finartzIntern.HotelRezervationSys.config.SecurityConfig;
+import com.finartzIntern.HotelRezervationSys.config.SecurityUtils;
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.UserCreateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.UserUpdateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.UserProfileResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.UserResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.User;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.UserRole;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.UserStatus;
 import com.finartzIntern.HotelRezervationSys.domain.repository.UserRepository;
 import com.finartzIntern.HotelRezervationSys.domain.service.UserService;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import java.time.LocalDate;
@@ -23,6 +30,7 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
 
     private UserResponseDto mapToDto(User user){
@@ -55,7 +63,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public UserResponseDto getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Bu e-posta adresine ait kullanıcı bulunamadı: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("Bu e-posta adresine ait kullanıcı bulunamadı: " + email));
 
         return mapToDto(user);
 
@@ -111,6 +119,65 @@ public class UserServiceImpl implements UserService {
 
             return response;
         }).collect(Collectors.toList());
+    }
+    @Override
+    public UserProfileResponseDto getUserProfile() {
+        User currentUser = SecurityUtils.getCurrentUser();
+
+        return new UserProfileResponseDto(
+                currentUser.getId(),
+                currentUser.getName(),
+                currentUser.getSurname(),
+                currentUser.getEmail(),
+                currentUser.getPhoneNumber(),
+                currentUser.getDateBirth(),
+                currentUser.getRole(),
+                currentUser.getStatus()
+        );
+    }
+    @Override
+    @Transactional
+    public UserProfileResponseDto updateUserProfile(UserUpdateRequestDto dto){
+        User user = userRepository.findById(SecurityUtils.getCurrentUser().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı!"));
+
+        if(dto.name() != null && !dto.name().isBlank()){
+            user.setName(dto.name());
+        }
+        if(dto.surname() != null && !dto.surname().isBlank()){
+            user.setSurname(dto.surname());
+        }
+        if(dto.phone() != null && !dto.phone().isBlank()){
+            user.setPhoneNumber(dto.phone());
+        }
+        if (dto.newPassword() != null && !dto.newPassword().isBlank()) {
+            if (dto.currentPassword() == null || dto.currentPassword().isBlank()) {
+                throw new RuntimeException("Şifrenizi değiştirmek için mevcut şifrenizi girmelisiniz!");
+            }
+
+            // Mevcut şifre veritabanındakiyle eşleşiyor mu kontrolü
+            if (!passwordEncoder.matches(dto.currentPassword(), user.getPasswordHash())) {
+                throw new RuntimeException("Mevcut şifreniz hatalı!");
+            }
+
+            // YENİ KONTROL: Yeni şifre, mevcut girilen şifre ile aynı olamaz!
+            if (dto.currentPassword().equals(dto.newPassword())) {
+                throw new RuntimeException("Yeni şifreniz mevcut şifreniz ile aynı olamaz!");
+            }
+
+            user.setPasswordHash(passwordEncoder.encode(dto.newPassword()));
+        }
+        User updatedUser = userRepository.save(user);
+        return new UserProfileResponseDto(
+                updatedUser.getId(),
+                updatedUser.getName(),
+                updatedUser.getSurname(),
+                updatedUser.getEmail(),
+                updatedUser.getPhoneNumber(),
+                updatedUser.getDateBirth(),
+                updatedUser.getRole(),
+                updatedUser.getStatus()
+        );
     }
 
 
