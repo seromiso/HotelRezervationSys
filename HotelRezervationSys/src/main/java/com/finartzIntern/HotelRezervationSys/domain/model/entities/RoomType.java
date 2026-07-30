@@ -53,6 +53,9 @@ public class RoomType {
     @OneToMany(mappedBy = "roomType", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RoomPrice> prices = new ArrayList<>();
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @OneToMany(mappedBy = "roomType", cascade = CascadeType.ALL)
     private List<Reservation> reservations = new ArrayList<>();
 

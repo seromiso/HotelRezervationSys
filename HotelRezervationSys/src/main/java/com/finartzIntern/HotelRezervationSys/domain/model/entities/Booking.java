@@ -3,12 +3,12 @@ package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.BookingStatus;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.PaymentStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "bookings")
@@ -50,6 +50,14 @@ public class Booking {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
+
+    @OneToMany(
+            mappedBy = "booking",
+            fetch = FetchType.LAZY
+    )
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Reservation> reservations = new ArrayList<>();
 
     @PreUpdate
     protected void onUpdate() {
