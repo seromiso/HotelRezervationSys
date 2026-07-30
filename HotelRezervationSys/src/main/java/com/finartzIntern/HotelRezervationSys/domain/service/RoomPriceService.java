@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface RoomPriceService {
     RoomPriceResponseDto addRoomPrice(Long roomTypeId, RoomPriceCreateRequestDto requestDto);
+    RoomPriceResponseDto updateRoomPrice(Long id, RoomPriceCreateRequestDto updateDto);
     List<RoomPriceResponseDto> getRoomPricesByRoomTypeId(Long roomTypeId);
     void deleteRoomPrice(Long id);
 }

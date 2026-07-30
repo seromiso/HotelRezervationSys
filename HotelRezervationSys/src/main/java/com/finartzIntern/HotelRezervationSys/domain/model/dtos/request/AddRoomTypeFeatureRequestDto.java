@@ -1,6 +1,8 @@
 package com.finartzIntern.HotelRezervationSys.domain.model.dtos.request;
 
-public record AddRoomTypeFeatureRequestDto(Long featureId) {
+import jakarta.validation.constraints.NotNull;
+
+public record AddRoomTypeFeatureRequestDto(@NotNull(message = "Feature id gerekli") Long featureId) {
 
 
 }

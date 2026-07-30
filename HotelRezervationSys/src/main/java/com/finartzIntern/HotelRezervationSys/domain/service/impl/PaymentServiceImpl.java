@@ -1,5 +1,5 @@
 package com.finartzIntern.HotelRezervationSys.domain.service.impl;
-
+import com.finartzIntern.HotelRezervationSys.domain.exceptions.ResourceNotFoundException;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.PaymentCreateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.PaymentResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Booking;
@@ -27,7 +27,8 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentResponseDto getPaymentById(Long id) {
 
         Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Ödeme bulunamadı! ID: " + id));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Ödeme bulunamadı! ID: " + id));
 
         PaymentResponseDto response = new PaymentResponseDto();
 
@@ -48,7 +49,8 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentResponseDto createPayment(PaymentCreateRequestDto paymentRequestDto) {
 
         Booking booking = bookingRepository.findById(paymentRequestDto.getBookingId())
-                .orElseThrow(() -> new RuntimeException("Rezervasyon bulunamadı!"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Rezervasyon bulunamadı!"));
 
         Payment payment = new Payment();
 

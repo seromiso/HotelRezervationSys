@@ -1,5 +1,6 @@
 package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 
+import com.finartzIntern.HotelRezervationSys.domain.model.enums.GuestType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 
@@ -27,22 +28,22 @@ public class ReservationGuest {
     @Column(nullable = false)
     private String surname;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "guest_type", nullable = false)
-    private String guestType;
+    private GuestType guestType;
 
     @Column(name = "is_primary_guest", nullable = false)
-    private Boolean primaryGuest;
+    private Boolean primaryGuest = false;   // güvenli varsayılan
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-
     }
 
+    // basit, zararsız yardımcı metodlar — okunabilirlik için kalabilir
     public void makePrimaryGuest() {
         this.primaryGuest = true;
     }

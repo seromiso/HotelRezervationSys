@@ -11,30 +11,22 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/room-type-images")
+@RequestMapping("/api/v1/owner/room-types")
 @RequiredArgsConstructor
 public class RoomTypeImageController {
 
     private final RoomTypeImageService roomTypeImageService;
 
-
-    @GetMapping("/room-type/{roomTypeId}")
-    public ResponseEntity<List<RoomTypeImageResponseDto>> getImagesByRoomTypeId(@PathVariable Long roomTypeId) {
-        return ResponseEntity.ok(roomTypeImageService.getImagesByRoomTypeId(roomTypeId));
-    }
-
-
-    @PostMapping("/room-type/{roomTypeId}")
+    @PostMapping("/{id}/images")
     public ResponseEntity<RoomTypeImageResponseDto> addImageToRoomType(
-            @PathVariable Long roomTypeId,
+            @PathVariable("id") Long id,
             @RequestBody RoomTypeImageCreateRequestDto requestDto) {
 
-        RoomTypeImageResponseDto response = roomTypeImageService.addImageToRoomType(roomTypeId, requestDto);
+        RoomTypeImageResponseDto response = roomTypeImageService.addImageToRoomType(id, requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-
-    @DeleteMapping("/{imageId}")
+    @DeleteMapping("/images/{imageId}")
     public ResponseEntity<Void> deleteImage(@PathVariable Long imageId) {
         roomTypeImageService.deleteImage(imageId);
         return ResponseEntity.noContent().build();

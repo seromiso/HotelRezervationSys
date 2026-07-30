@@ -6,9 +6,16 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Repository
 public interface RoomPriceRepository extends JpaRepository<RoomPrice, Long> {
     List<RoomPrice> findByRoomTypeId(Long roomTypeId); // Oda tipine ait fiyatları listeler
     List<RoomPrice> findByRoomTypeIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(Long roomTypeId, LocalDate endDate, LocalDate startDate);// Rezervasyon yapılacak tarihlerde fiyatları hesaplar
+
+    Optional<RoomPrice> findFirstByRoomTypeIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+            Long roomTypeId,
+            LocalDate checkInDate,
+            LocalDate checkOutDate
+    );
 }
