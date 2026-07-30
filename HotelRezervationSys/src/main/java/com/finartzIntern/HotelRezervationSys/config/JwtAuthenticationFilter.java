@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,12 +16,21 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) throws ServletException {
+        // Eğer gelen istek adresi "/api/v1/auth" içeriyorsa, bu filtreden (token kontrolünden) HİÇ GEÇİRME!
+        return request.getServletPath().contains("/api/v1/auth");
+    }
 
     @Override
     protected void doFilterInternal(
@@ -28,51 +39,48 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // 1. İstekteki "Authorization" başlığını (header) alıyoruz
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
+        try {
+            final String authHeader = request.getHeader("Authorization");
+            final String jwt;
+            final String userEmail;
 
-        // 2. Eğer başlık boşsa veya "Bearer " ile başlamıyorsa istek sonraki filtrelere geçsin (işlem yapma)
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 3. "Bearer " metnini kesip saf token'ı alıyoruz (7. karakterden sonrası)
-        jwt = authHeader.substring(7);
-
-        // 4. Token'ın içinden kullanıcının e-posta adresini çözüyoruz
-        userEmail = jwtService.extractUsername(jwt);
-
-        // 5. E-posta boş değilse ve sistemde hali hazırda giriş yapmış bir kullanıcı yoksa (authentication == null)
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            // Veri tabanından (CustomUserDetailsService aracılığıyla) kullanıcıyı buluyoruz
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-
-            // 6. Token geçerli mi diye kontrol ediyoruz
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-
-                // Spring Security için "Bu kullanıcı doğrulandı" kartı (Token) oluşturuyoruz
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities() // Kullanıcının rolleri (CUSTOMER, GUEST vb.)
-                );
-
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-
-                // 7. Ve bu kartı Spring Security'nin çekmecesine (Context) koyuyoruz.
-                // Artık bu istek için bodyguard "Geçebilirsin" diyecek.
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                filterChain.doFilter(request, response);
+                return;
             }
-        }
 
-        // İşlemler bitti, isteği bir sonraki filtreye veya Controller'a gönderiyoruz
-        filterChain.doFilter(request, response);
+            jwt = authHeader.substring(7);
+            userEmail = jwtService.extractUsername(jwt); // <-- ExpiredJwtException tam burada fırlatılır!
+
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    // 1. Kullanıcının mevcut yetkilerini yeni ve değiştirilebilir bir listeye alıyoruz
+                    List<GrantedAuthority> authorities = new ArrayList<>(userDetails.getAuthorities());
+
+                    // 2. Token içindeki "isEmailVerified" damgasını okuyup onaylıysa listeye ekliyoruz
+                    if (jwtService.extractEmailVerified(jwt)) {
+                        authorities.add(new SimpleGrantedAuthority("VERIFIED_USER"));
+                    }
+
+                    // 3. Güncellenmiş yetki listesiyle token oluşturup SecurityContext'e atıyoruz
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            authorities
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+            filterChain.doFilter(request, response);
+
+        } catch (io.jsonwebtoken.ExpiredJwtException ex) {
+            // Token süresi dolduğunda 500 patlatmak yerine şık bir 401 JSON yanıtı dönüyoruz:
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"error\": \"TOKEN_EXPIRED\", \"message\": \"Oturum süreniz doldu, lütfen tekrar giriş yapın.\"}");
+        }
     }
 }
-

@@ -4,9 +4,7 @@ import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.HotelCrea
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.HotelUpdateRequestDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.HotelResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Hotel;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface HotelMapper {
@@ -17,5 +15,6 @@ public interface HotelMapper {
     @Mapping(target = "commissionRate",ignore = true)
     Hotel toEntityDto(HotelCreateRequestDto dto);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void UpdateHotelFromDto(HotelUpdateRequestDto updateDto,@MappingTarget Hotel hotel);
 }

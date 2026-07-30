@@ -1,16 +1,16 @@
 package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "room_type_features")
-@Data
+
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 
 public class RoomTypeFeature {
 

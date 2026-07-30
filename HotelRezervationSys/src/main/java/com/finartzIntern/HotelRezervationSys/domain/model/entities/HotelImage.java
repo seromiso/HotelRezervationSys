@@ -22,7 +22,7 @@ public class HotelImage {
     @JoinColumn(name = "hotel_id", nullable = false)
     private Hotel hotel;
 
-    // Her resmin kesinlikle bir kategorisi olmalıdır (ManyToOne)
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private ImageCategory category;
@@ -30,7 +30,7 @@ public class HotelImage {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
-    @Column(name = "display_order")
+    @Column(name = "display_order",nullable = false)
     private Integer displayOrder; // Resimlerin ekrandaki sıralaması için (1. resim kapak resmi olsun vb.)
 
     @Column(name = "created_at", updatable = false)
