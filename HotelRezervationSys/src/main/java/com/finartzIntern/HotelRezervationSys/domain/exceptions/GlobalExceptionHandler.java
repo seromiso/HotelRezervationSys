@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -63,6 +64,15 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, message, request);
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            AccessDeniedException ex,
+            HttpServletRequest request
+    ) {
+        String message = resolveMessageWithFallback(ex.getMessage(), "error.access.denied", request.getLocale());
+        return buildResponse(HttpStatus.FORBIDDEN, message, request);
+    }
+
     /**
      * Wrong type in a path/request parameter (e.g. text instead of a number) -> 400.
      * Thrown by Spring itself, not a custom exception.
@@ -85,6 +95,7 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
+        ex.printStackTrace();
         String message = resolveMessage("error.internal.server", request.getLocale());
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, message, request);
     }
