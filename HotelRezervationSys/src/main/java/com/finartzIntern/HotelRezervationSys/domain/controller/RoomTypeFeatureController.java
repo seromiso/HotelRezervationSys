@@ -35,8 +35,7 @@ public class RoomTypeFeatureController {
             @PathVariable Long roomTypeId,
             @PathVariable Long featureId
     ) {
-        RoomTypeFeatureResponseDto feature =
-                roomTypeFeatureService.getRoomTypeFeature(roomTypeId, featureId);
+        RoomTypeFeatureResponseDto feature = roomTypeFeatureService.getRoomTypeFeature(roomTypeId, featureId);
 
         return ResponseEntity.ok(feature);
     }

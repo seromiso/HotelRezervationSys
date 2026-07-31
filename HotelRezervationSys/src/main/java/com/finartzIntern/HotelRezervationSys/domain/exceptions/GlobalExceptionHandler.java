@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
-        ex.printStackTrace();
+        
         String message = resolveMessage("error.internal.server", request.getLocale());
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, message, request);
     }
