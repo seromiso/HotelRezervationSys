@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 @Service
@@ -202,5 +203,32 @@ public class HotelReviewServiceImpl implements HotelReviewService {
         HotelReviews savedReview = hotelReviewRepository.save(review);
 
         return HotelReviewResponseDto.from(savedReview);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<HotelReviewListResponseDto> getHotelReviewsAsOwner(
+            Long hotelId,
+            Pageable pageable,
+            User currentUser
+    ) {
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(() -> new ResourceNotFoundException("error.hotel.not.found"));
+
+        validateHotelOwnership(hotel, currentUser);
+
+        return hotelReviewRepository
+                .findByHotel_IdOrderByCreatedAtDesc(hotelId, pageable)
+                .map(HotelReviewListResponseDto::from);
+    }
+
+    private void validateHotelOwnership(Hotel hotel, User currentUser) {
+        if (currentUser == null) {
+            throw new AccessDeniedException("error.authentication.required");
+        }
+
+        if (!Objects.equals(hotel.getManagerId(), currentUser.getId())) {
+            throw new AccessDeniedException("error.hotel.owner.forbidden");
+        }
     }
 }

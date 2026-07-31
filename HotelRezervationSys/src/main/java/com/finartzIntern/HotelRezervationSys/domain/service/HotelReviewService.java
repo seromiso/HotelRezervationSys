@@ -27,5 +27,10 @@ public interface HotelReviewService {
             User currentUser);
     HotelReviewResponseDto updateReview(Long reviewId, UpdateHotelReviewRequestDto request);
     void deleteReview(Long reviewId);
+    Page<HotelReviewListResponseDto> getHotelReviewsAsOwner(
+            Long hotelId,
+            Pageable pageable,
+            User currentUser
+    );
 
 }

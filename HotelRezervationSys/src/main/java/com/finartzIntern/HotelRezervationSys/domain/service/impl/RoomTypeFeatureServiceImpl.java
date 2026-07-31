@@ -8,14 +8,18 @@ import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.RoomType
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.Features;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.RoomType;
 import com.finartzIntern.HotelRezervationSys.domain.model.entities.RoomTypeFeature;
+import com.finartzIntern.HotelRezervationSys.domain.model.entities.User;
 import com.finartzIntern.HotelRezervationSys.domain.repository.FeaturesRepository;
 import com.finartzIntern.HotelRezervationSys.domain.repository.RoomTypeFeatureRepository;
 import com.finartzIntern.HotelRezervationSys.domain.repository.RoomTypeRepository;
 import com.finartzIntern.HotelRezervationSys.domain.service.RoomTypeFeatureService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+
 @Service
 public class RoomTypeFeatureServiceImpl implements RoomTypeFeatureService {
 
@@ -68,15 +72,9 @@ public class RoomTypeFeatureServiceImpl implements RoomTypeFeatureService {
             throw new ConflictException("error.room.type.feature.already.exists");
         }
 
-        RoomType roomType = roomTypeRepository.findById(roomTypeId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "error.room.type.not.found" + roomTypeId
-                ));
+        RoomType roomType = getRoomTypeOrThrow(roomTypeId);
 
-        Features feature = featuresRepository.findById(request.featureId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "error.feature.not.found" + request.featureId()
-                ));
+        Features feature = getRoomFeatureToAddOrThrow(request.featureId());
 
         if (!"ROOM".equalsIgnoreCase(feature.getType())) {
             throw new InvalidRequestException("error.room.type.feature.only.room.allowed");
@@ -99,5 +97,60 @@ public class RoomTypeFeatureServiceImpl implements RoomTypeFeatureService {
         }
 
         roomTypeFeatureRepository.deleteByRoomType_IdAndFeature_Id(roomTypeId, featureId);
+    }
+    @Override
+    @Transactional
+    public RoomTypeFeatureResponseDto addFeatureToRoomTypeAsOwner(
+            Long roomTypeId,
+            AddRoomTypeFeatureRequestDto request,
+            User currentUser
+    ) {
+        if (request == null || request.featureId() == null) {
+            throw new InvalidRequestException("error.feature.id.required");
+        }
+
+        RoomType roomType = getRoomTypeOrThrow(roomTypeId);
+
+        validateRoomTypeOwnership(roomType, currentUser);
+
+        if (roomTypeFeatureRepository.existsByRoomType_IdAndFeature_Id(roomTypeId, request.featureId())) {
+            throw new ConflictException("error.room.type.feature.already.exists");
+        }
+
+        Features feature = getRoomFeatureToAddOrThrow(request.featureId());
+
+        RoomTypeFeature roomTypeFeature = new RoomTypeFeature();
+        roomTypeFeature.setRoomType(roomType);
+        roomTypeFeature.setFeature(feature);
+
+        RoomTypeFeature savedRoomTypeFeature = roomTypeFeatureRepository.save(roomTypeFeature);
+
+        return RoomTypeFeatureResponseDto.from(savedRoomTypeFeature);
+    }
+
+    private RoomType getRoomTypeOrThrow(Long roomTypeId) {
+        return roomTypeRepository.findById(roomTypeId)
+                .orElseThrow(() -> new ResourceNotFoundException("error.room.type.not.found"));
+    }
+
+    private Features getRoomFeatureToAddOrThrow(Long featureId) {
+        Features feature = featuresRepository.findById(featureId)
+                .orElseThrow(() -> new ResourceNotFoundException("error.feature.not.found"));
+
+        if (!"ROOM".equalsIgnoreCase(feature.getType())) {
+            throw new InvalidRequestException("error.room.type.feature.only.room.allowed");
+        }
+
+        return feature;
+    }
+
+    private void validateRoomTypeOwnership(RoomType roomType, User currentUser) {
+        if (currentUser == null) {
+            throw new AccessDeniedException("error.authentication.required");
+        }
+
+        if (!Objects.equals(roomType.getHotel().getManagerId(), currentUser.getId())) {
+            throw new AccessDeniedException("error.hotel.owner.forbidden");
+        }
     }
 }

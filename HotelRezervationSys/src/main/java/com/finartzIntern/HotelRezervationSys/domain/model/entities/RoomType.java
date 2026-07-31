@@ -3,19 +3,17 @@ package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.RoomTypeStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+@Data
 @Entity
 @Table(name = "room_types")
-@Getter @Setter
+
 @NoArgsConstructor
 @AllArgsConstructor
 public class RoomType {
@@ -140,6 +138,6 @@ public class RoomType {
     }
 
     public void deactivateRoomType() {
-        this.status = RoomTypeStatus.OUT_OF_SERVICE;
+        this.status = RoomTypeStatus.INACTIVE;
     }
 }
