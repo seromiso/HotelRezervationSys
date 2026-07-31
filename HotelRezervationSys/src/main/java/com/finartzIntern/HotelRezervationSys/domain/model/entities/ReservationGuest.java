@@ -3,7 +3,7 @@ package com.finartzIntern.HotelRezervationSys.domain.model.entities;
 import com.finartzIntern.HotelRezervationSys.domain.model.enums.GuestType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;

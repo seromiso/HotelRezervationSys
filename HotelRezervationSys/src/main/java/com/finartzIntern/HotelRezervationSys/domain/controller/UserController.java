@@ -1,11 +1,15 @@
 package com.finartzIntern.HotelRezervationSys.domain.controller;
 
+
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.UserCreateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.request.UserUpdateRequestDto;
+import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.UserProfileResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.UserResponseDto;
 import com.finartzIntern.HotelRezervationSys.domain.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,6 +41,18 @@ public class UserController {
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         List<UserResponseDto> response = userService.getAllUsers();
         return ResponseEntity.ok(response);
+    }
+
+
+    @GetMapping("/profile")
+    public ResponseEntity<UserProfileResponseDto> getProfile() {
+        return ResponseEntity.ok(userService.getUserProfile());
+    }
+
+
+    @PutMapping("/profile")
+    public ResponseEntity<UserProfileResponseDto> updateProfile(@RequestBody UserUpdateRequestDto dto) {
+        return ResponseEntity.ok(userService.updateUserProfile(dto));
     }
 
 }

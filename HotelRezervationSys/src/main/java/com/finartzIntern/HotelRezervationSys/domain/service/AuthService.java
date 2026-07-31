@@ -7,6 +7,7 @@ import com.finartzIntern.HotelRezervationSys.domain.model.dtos.response.AuthResp
 public interface AuthService {
     AuthResponseDto register(RegisterRequestDto registerRequestDto);
     AuthResponseDto login(LoginRequestDto loginRequestDto);
-    void verifyEmail(String email);
+    AuthResponseDto verifyEmail(String email);
 
+    void resendVerificationEmail();
 }

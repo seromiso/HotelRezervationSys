@@ -1,5 +1,6 @@
 package com.finartzIntern.HotelRezervationSys.config;
 
+import com.finartzIntern.HotelRezervationSys.domain.model.entities.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -26,7 +27,7 @@ public class JwtService {
     @Value("${application.security.jwt.expiration:86400000}")
     private long jwtExpiration;
 
-    // 1. Kullanıcı Bilgilerinden Token Üretme (Bilet Basma)
+    // Kullanıcı Bilgilerinden Token Üretme (Bilet Basma)
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
@@ -34,10 +35,10 @@ public class JwtService {
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
                 .claims(extraClaims)
-                .subject(userDetails.getUsername()) // E-posta adresini yerleştiriyoruz
+                .subject(userDetails.getUsername()) // E-posta adresi
                 .issuedAt(new Date(System.currentTimeMillis())) // Üretim tarihi
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration)) // Son kullanma tarihi
-                .signWith(getSignInKey(), Jwts.SIG.HS256) // 0.12.6 için yeni imzalama standardı
+                .signWith(getSignInKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
@@ -46,6 +47,14 @@ public class JwtService {
         final String username = extractUsername(token);
         // Token'daki e-posta ile gelen kullanıcının e-postası uyuşuyor mu ve süresi geçmiş mi?
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    }
+    public String generateToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        // Kullanıcının onay durumunu token içine mühürlüyoruz:
+        claims.put("isEmailVerified", user.isEmailVerified());
+        claims.put("role", user.getRole().name());
+
+        return generateToken(claims, user);
     }
 
     // 3. Token'ın İçinden Kullanıcı Adını (E-postayı) Çekme
@@ -71,14 +80,21 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(getSignInKey()) // 0.12.6 ile gelen yeni doğrulama metodu
+                .verifyWith(getSignInKey())
                 .build()
                 .parseSignedClaims(token)
-                .getPayload(); // Eski sürümdeki getBody() yerine getPayload() kullanıyoruz
+                .getPayload();
     }
 
     private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public boolean extractEmailVerified(String token) {
+        return extractClaim(token, claims -> {
+            Boolean isVerified = claims.get("isEmailVerified", Boolean.class);
+            return isVerified != null && isVerified; // Null pointer korumalı döndürme
+        });
     }
 }

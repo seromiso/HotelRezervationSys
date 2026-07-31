@@ -83,6 +83,12 @@ public class Hotel {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "averagerating",columnDefinition = "NUMERIC(3,1)")
+    private double averageRating;
+
+    @Column(name = "license_document_url")
+    private String licenseDocumentUrl;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -95,13 +101,6 @@ public class Hotel {
     }
 
 
-    public void archiveHotel(){
-        this.status = HotelStatus.INACTIVE;
-    }
-
-    public void activateHotel(){
-        this.status = HotelStatus.ACTIVE;
-    }
 
     public void addFeature(Features feature){
         if(this.features == null){
@@ -114,6 +113,13 @@ public class Hotel {
         if(this.features != null){
             features.remove(feature);
         }
+    }
+    public String getCoverImageUrl() {
+        return images.stream()
+                .filter(image -> image.getDisplayOrder() != null && image.getDisplayOrder() == 1)
+                .map(HotelImage::getImageUrl)
+                .findFirst()
+                .orElse(null);
     }
 
 }

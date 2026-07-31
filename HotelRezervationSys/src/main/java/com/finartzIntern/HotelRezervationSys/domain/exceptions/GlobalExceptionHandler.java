@@ -19,10 +19,9 @@ import java.util.Locale;
 public class GlobalExceptionHandler {
 
     private final MessageSource messageSource;
-    
+
     /**
      * Resource not found (user, hotel, reservation, etc.) -> 404.
-     * ex.getMessage() is expected to be a message key (e.g. "user.not.found").
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
@@ -36,8 +35,6 @@ public class GlobalExceptionHandler {
 
     /**
      * Request failed validation or violates a business rule -> 400.
-     * ex.getMessage() is expected to be a message key (e.g. "booking.checkin.past").
-     * Shared across all services.
      */
     @ExceptionHandler(InvalidRequestException.class)
     public ResponseEntity<ErrorResponse> handleInvalidRequestException(
@@ -51,8 +48,6 @@ public class GlobalExceptionHandler {
 
     /**
      * Request valid but conflicts with current state -> 409.
-     * ex.getMessage() is expected to be a message key (e.g. "booking.no.availability").
-     * Shared across all services.
      */
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflictException(
@@ -74,8 +69,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Wrong type in a path/request parameter (e.g. text instead of a number) -> 400.
-     * Thrown by Spring itself, not a custom exception.
+     * BadRequestException & IllegalArgumentException -> 400.
+     * Bu iki exception aynı işlemi yaptığı için tek metotta birleştirildi.
+     */
+    @ExceptionHandler({BadRequestException.class, IllegalArgumentException.class})
+    public ResponseEntity<ErrorResponse> handleBadRequests(
+            RuntimeException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    /**
+     * Wrong type in a path/request parameter -> 400.
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatchException(
@@ -87,8 +93,42 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Authentication (Giriş Başarısız) -> 401
+     */
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(
+            org.springframework.security.core.AuthenticationException ex,
+            HttpServletRequest request
+    ) {
+        // Özel hata başlığı (error parameter) kullanabilmek için overloaded metodu çağırıyoruz.
+        return buildResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Giriş Başarısız",
+                "E-posta veya şifre hatalı! (Detay: " + ex.getMessage() + ")",
+                request
+        );
+    }
+
+    /**
+     * Email Not Verified (E-posta Onaylanmamış) -> 403
+     */
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<ErrorResponse> handleEmailNotVerifiedException(
+            EmailNotVerifiedException ex,
+            HttpServletRequest request
+    ) {
+        // Frontend'in popup açması için "EMAIL_NOT_VERIFIED" stringini özel gönderiyoruz
+        return buildResponse(
+                HttpStatus.FORBIDDEN,
+                "EMAIL_NOT_VERIFIED",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    /**
      * Catch-all for anything not handled above -> 500.
-     * Keeps the app from crashing with a raw stack trace. Must stay last.
+     * Must stay last.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
@@ -100,15 +140,32 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, message, request);
     }
 
+    // --- HELPER METOTLAR ---
+
+    /**
+     * Standart HTTP Status Error'ları için yardımcı metot
+     */
     private ResponseEntity<ErrorResponse> buildResponse(
             HttpStatus status,
+            String message,
+            HttpServletRequest request
+    ) {
+        return buildResponse(status, status.getReasonPhrase(), message, request);
+    }
+
+    /**
+     * Özel Hata Tipleri (Örn: "EMAIL_NOT_VERIFIED" veya "Giriş Başarısız") için yardımcı metot
+     */
+    private ResponseEntity<ErrorResponse> buildResponse(
+            HttpStatus status,
+            String errorType,
             String message,
             HttpServletRequest request
     ) {
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(),
                 status.value(),
-                status.getReasonPhrase(),
+                errorType,
                 message,
                 request.getRequestURI()
         );
@@ -123,11 +180,6 @@ public class GlobalExceptionHandler {
         }
     }
 
-    /**
-     * Resolves a specific message key and falls back to a generic key
-     * if the specific one isn't defined in messages.properties.
-     * Used for exceptions where the service picks a specific key per case.
-     */
     private String resolveMessageWithFallback(String specificKey, String fallbackKey, Locale locale) {
         try {
             return messageSource.getMessage(specificKey, null, locale);
@@ -136,3 +188,5 @@ public class GlobalExceptionHandler {
         }
     }
 }
+
+
